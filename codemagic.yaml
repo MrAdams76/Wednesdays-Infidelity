@@ -1,0 +1,152 @@
+workflows:
+  ios-unsigned:
+    name: Wednesday Infidelity - Original Source iOS
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      xcode: 16.4
+      vars:
+        LIME_VERSION: "8.2.2"
+        OPENFL_VERSION: "9.4.1"
+        FLIXEL_VERSION: "4.11.0"
+        FLIXEL_ADDONS_VERSION: "2.11.0"
+        FLIXEL_UI_VERSION: "2.4.0"
+        HSCRIPT_VERSION: "2.4.0"
+        HXCPP_VERSION: "4.2.1"
+    scripts:
+      - name: Verify original source
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR"
+          mkdir -p build-logs
+          test -f Project.xml
+          test -d source
+          test -d assets
+          xcodebuild -version
+      - name: Install ARM64 Haxe
+        script: |
+          set -euo pipefail
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          test "$(uname -m)" = "arm64"
+          command -v haxe >/dev/null || brew install haxe
+          command -v neko >/dev/null || brew install neko
+          mkdir -p "$CM_BUILD_DIR/.haxelib-repo"
+          haxelib setup "$CM_BUILD_DIR/.haxelib-repo"
+          haxe --version
+      - name: Install original build dependencies
+        script: |
+          set -euo pipefail
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          haxelib install lime "$LIME_VERSION" --quiet
+          haxelib install openfl "$OPENFL_VERSION" --quiet
+          haxelib install flixel "$FLIXEL_VERSION" --quiet
+          haxelib install flixel-addons "$FLIXEL_ADDONS_VERSION" --quiet
+          haxelib install flixel-ui "$FLIXEL_UI_VERSION" --quiet
+          haxelib install hscript "$HSCRIPT_VERSION" --quiet
+          haxelib install hxcpp "$HXCPP_VERSION" --quiet
+          haxelib install hxp --quiet
+          haxelib install format --quiet
+          haxelib install flxanimate 1.2.0 --quiet
+          haxelib install hxCodec 2.5.1 --quiet
+          haxelib set lime "$LIME_VERSION"
+          haxelib set openfl "$OPENFL_VERSION"
+          haxelib set flixel "$FLIXEL_VERSION"
+          haxelib set flixel-addons "$FLIXEL_ADDONS_VERSION"
+          haxelib set flixel-ui "$FLIXEL_UI_VERSION"
+          haxelib set hscript "$HSCRIPT_VERSION"
+          haxelib set hxcpp "$HXCPP_VERSION"
+          haxelib set flxanimate 1.2.0
+          haxelib set hxCodec 2.5.1
+          haxelib list
+      - name: Guard desktop Windows APIs
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR"
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("source/data/CppAPI.hx")
+          if path.exists():
+              source = path.read_text()
+              methods = ("setWindowColorMode", "setWindowAlpha", "_setWindowLayered")
+              lines = []
+              for line in source.splitlines(keepends=True):
+                  if any("WindowsData." + method + "(" in line for method in methods):
+                      if not line.strip().endswith(";"):
+                          raise RuntimeError("Unsupported multiline Windows API call")
+                      lines.extend(["#if windows\n", line, "#end\n"])
+                  else:
+                      lines.append(line)
+              path.write_text("".join(lines))
+          PY
+      - name: Disable desktop-only VLC on iOS
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR"
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          original = Path("source/vlc")
+          if original.exists():
+              shutil.move(str(original), "source/vlc-desktop-backup")
+          original.mkdir(parents=True, exist_ok=True)
+          original.joinpath("MP4Handler.hx").write_text("""
+          package vlc;
+          import openfl.display.Sprite;
+          class MP4Handler extends Sprite {
+            public var readyCallback:Void->Void;
+            public var finishCallback:Void->Void;
+            public var skipable:Bool = false;
+            public var focus:Bool = true;
+            public var isPlaying:Bool = false;
+            public var volume:Float = 1;
+            public var repeat:Int = 0;
+            public function new(daFocus:Null<Bool> = true, width:Float = 320, height:Float = 240, autoScale:Bool = true) {
+              super();
+              if (daFocus != null) focus = daFocus;
+            }
+            public function playVideo(path:String, ?repeat:Bool = false, pauseMusic:Bool = false):Void {
+              isPlaying = true;
+              haxe.Timer.delay(function() {
+                if (!isPlaying) return;
+                if (readyCallback != null) readyCallback();
+                finishVideo();
+              }, 1);
+            }
+            public function finishVideo():Void {
+              if (!isPlaying) return;
+              isPlaying = false;
+              if (finishCallback != null) finishCallback();
+            }
+            public function pause():Void {}
+            public function resume():Void {}
+            public function stop():Void { finishVideo(); }
+            public function dispose():Void { isPlaying = false; }
+          }
+          """.lstrip())
+          PY
+      - name: Generate iOS Xcode project
+        script: |
+          set -euo pipefail
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          haxelib run lime setup -y 2>&1 | tee build-logs/lime-setup.log
+          haxelib run lime update ios -release -verbose 2>&1 | tee build-logs/lime-update.log
+          find export -name '*.xcodeproj' -print
+      - name: Compile unsigned iPhone app
+        script: |
+          set -euo pipefail
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          haxelib run lime build ios -release -nosign -verbose 2>&1 | tee build-logs/lime-build.log
+      - name: Package unsigned IPA
+        script: |
+          set -euo pipefail
+          APP="$(find "$CM_BUILD_DIR/export" -type d -name '*.app' -path '*iphoneos*' -print -quit)"
+          test -n "$APP" || { echo "No iPhoneOS app found"; exit 1; }
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c 'Print CFBundleExecutable' "$APP/Info.plist")
+          lipo -archs "$APP/$EXECUTABLE" | grep -qw arm64
+          mkdir -p "$CM_BUILD_DIR/ipa/Payload"
+          cp -R "$APP" "$CM_BUILD_DIR/ipa/Payload/"
+          cd "$CM_BUILD_DIR/ipa"
+          zip -qry Wednesday-Infidelity-Unsigned.ipa Payload
+    artifacts:
+      - ipa/*.ipa
+      - build-logs/*.log
