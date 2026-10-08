@@ -24,7 +24,7 @@ class IOSTitleState extends FlxState
 
         // Load one image at a time and report missing assets instead of passing
         // invalid image paths to FlxSprite.loadGraphic.
-        var bgPath = Paths.image("Spiral Shader Still");
+        var bgPath = Paths.returnGraphic("Spiral Shader Still");
         if (bgPath != null)
         {
             var bg = new FlxSprite().loadGraphic(bgPath);
@@ -35,7 +35,7 @@ class IOSTitleState extends FlxState
         else
             trace("iOS missing title spiral: " + bgPath);
 
-        var mickeyPath = Paths.image("mickeysangre", "preload");
+        var mickeyPath = Paths.returnGraphic("mickeysangre", "preload");
         if (mickeyPath != null)
         {
             var mickey = new FlxSprite().loadGraphic(mickeyPath);
