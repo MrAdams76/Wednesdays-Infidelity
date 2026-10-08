@@ -47,7 +47,7 @@
 	<!-- DONT ENABLE THIS -->
 	<define name="CHECK_FOR_UPDATES" if="desktop officialBuild"/>
 
-	<define name="PRELOAD_ALL" unless="web" />
+	<define name="PRELOAD_ALL" unless="web || ios" />
 	<define name="NO_PRELOAD_ALL" unless="PRELOAD_ALL"/>
 	
 	<library name="videos"        preload="true" />
@@ -80,8 +80,8 @@
 	<haxelib name="flixel-ui" />
 	<haxelib name="hxp" />
 	<haxelib name="flxanimate" />
-	<haxelib name="discord_rpc"/>
-	<haxelib name="hxCodec"/>
+	<haxelib name="discord_rpc" unless="ios"/>
+	<haxelib name="hxCodec" unless="ios"/>
 
 	<!-- ______________________________ Haxedefines _____________________________ -->
 
@@ -91,7 +91,7 @@
 	<!--Disable the Flixel core debugger. Automatically gets set whenever you compile in release mode!-->
 	<haxedef name="FLX_NO_DEBUG" unless="debug" />
 
-	<error value="Targets besides desktop are not supported" unless="desktop" />
+	<error value="Targets besides desktop are not supported" unless="desktop || ios" />
 
 	<haxedef name="no-deprecation-warnings" />
 
