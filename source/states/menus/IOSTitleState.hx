@@ -22,7 +22,6 @@ class IOSTitleState extends FlxState
         FlxG.camera.bgColor = FlxColor.BLACK;
         status = new FlxText(0, FlxG.height - 95, FlxG.width, "LOADING MICKEY TITLE...", 32);
         status.setFormat(null, 32, FlxColor.WHITE, CENTER);
-        add(status);
 
         // Load one image at a time and report missing assets instead of passing
         // invalid image paths to FlxSprite.loadGraphic.
@@ -47,6 +46,7 @@ class IOSTitleState extends FlxState
         else
             trace("iOS missing Mickey artwork: " + mickeyPath);
 
+        add(status);
         status.text = "TAP TO OPEN MENU";
         status.y = FlxG.height - 95;
         ready = true;
