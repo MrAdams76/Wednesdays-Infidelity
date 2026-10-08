@@ -46,6 +46,9 @@ class WarningState extends MusicBeatState
 	private var optionTitle:Alphabet;
 	private var warnTitle:FlxText;
 	private var infoTexts:Array<FlxText> = [];
+	#if ios
+	private var mobileButtons:Array<FlxText> = [];
+	#end
 
 	override function create()
 	{
@@ -134,7 +137,26 @@ class WarningState extends MusicBeatState
 		addOption(option);
 
 		genOptions();
+		#if ios
+		addMobileButtons();
+		#end
 	}
+
+	#if ios
+	private function addMobileButtons():Void
+	{
+		var labels = ['UP', 'DOWN', 'SELECT', 'CONTINUE'];
+		for (i in 0...labels.length)
+		{
+			var b = new FlxText(FlxG.width * (0.03 + i * 0.245), FlxG.height - 105, FlxG.width * 0.22, labels[i], 27);
+			b.setFormat(null, 27, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			b.borderSize = 3;
+			b.cameras = [camHUD];
+			add(b);
+			mobileButtons.push(b);
+		}
+	}
+	#end
 
 	function addOption(option:Option)
 	{
@@ -313,31 +335,27 @@ class WarningState extends MusicBeatState
 		}
 
 		#if ios
-		// Touch selection and confirmation on the accessibility warning screen.
 		if (canMove)
 		{
 			for (touch in FlxG.touches.list)
 			{
 				if (!touch.justPressed) continue;
 				var point = touch.getScreenPosition(camHUD);
-				if (canPressSpace && point.y > FlxG.height * 0.79)
+				if (point.y >= FlxG.height - 125)
 				{
-					continueFromWarning();
-					return;
-				}
-				var optionPoint = touch.getScreenPosition(camGame);
-				for (i in 0...grpOptions.members.length)
-				{
-					var item = grpOptions.members[i];
-					if (item != null && optionPoint.y >= item.y - 35 && optionPoint.y <= item.y + item.height + 35)
+					var index = Std.int(point.x / (FlxG.width * 0.245));
+					switch (index)
 					{
-						curSelected = i;
-						changeSelection();
-						curOption.setValue(!curOption.getValue());
-						curOption.change();
-						reloadCheckboxes();
-						break;
-					}
+						case 0: changeSelection(-1);
+						case 1: changeSelection(1);
+						case 2:
+							curOption.setValue(!curOption.getValue());
+							curOption.change();
+							reloadCheckboxes();
+						case 3 | 4:
+							continueFromWarning();
+						}
+					return;
 				}
 			}
 		}
@@ -374,7 +392,8 @@ class WarningState extends MusicBeatState
 		#if ios
 		// Diagnostic: isolate iOS warning-screen confirmation effects.
 		// Avoid sound playback, flicker, and settings I/O in this test build.
-		MusicBeatState.switchState(new UnfinishedState());
+		// Bypass desktop CustomFadeTransition while diagnosing iOS state crashes.
+		FlxG.switchState(new UnfinishedState());
 		#else
 		FlxTween.tween(camGame, {alpha: 0}, 1);
 		FlxTween.tween(camHUD, {alpha: 0}, 1);
