@@ -87,7 +87,7 @@ workflows:
           import shutil
           original = Path("source/vlc")
           if original.exists():
-              shutil.move(str(original), "source/vlc-desktop-backup")
+              shutil.move(str(original), "vlc-desktop-backup")
           original.mkdir(parents=True, exist_ok=True)
           original.joinpath("MP4Handler.hx").write_text("""
           package vlc;
