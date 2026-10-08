@@ -5,6 +5,7 @@ import flixel.FlxCamera;
 import flixel.FlxG;
 import flixel.FlxObject;
 import flixel.FlxState;
+import flixel.FlxSprite;
 import flixel.effects.FlxFlicker;
 import flixel.graphics.FlxGraphic;
 import flixel.group.FlxGroup.FlxTypedGroup;
@@ -148,7 +149,12 @@ class WarningState extends MusicBeatState
 		var labels = ['UP', 'DOWN', 'SELECT', 'CONTINUE'];
 		for (i in 0...labels.length)
 		{
-			var b = new FlxText(FlxG.width * (0.03 + i * 0.245), FlxG.height - 105, FlxG.width * 0.22, labels[i], 27);
+			var bx:Float = FlxG.width * (0.03 + i * 0.245);
+			var bg = new FlxSprite(bx, FlxG.height - 120).makeGraphic(Std.int(FlxG.width * 0.22), 90, FlxColor.BLACK);
+			bg.alpha = 0.75;
+			bg.cameras = [camHUD];
+			add(bg);
+			var b = new FlxText(bx, FlxG.height - 105, FlxG.width * 0.22, labels[i], 27);
 			b.setFormat(null, 27, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 			b.borderSize = 3;
 			b.cameras = [camHUD];
