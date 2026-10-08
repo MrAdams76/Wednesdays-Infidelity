@@ -38,10 +38,12 @@ class MusicBeatState extends FlxUIState
 		var skip:Bool = FlxTransitionableState.skipNextTransOut;
 		super.create();
 
+		#if !ios
 		if (!skip)
 		{
 			openSubState(new CustomFadeTransition(0.7, true));
 		}
+		#end
 		FlxTransitionableState.skipNextTransOut = false;
 	}
 
@@ -97,6 +99,10 @@ class MusicBeatState extends FlxUIState
 
 	public static function switchState(nextState:FlxState)
 	{
+		#if ios
+		FlxG.switchState(nextState);
+		return;
+		#end
 		// Custom made Trans in
 		var curState:Dynamic = FlxG.state;
 		var leState:MusicBeatState = curState;
