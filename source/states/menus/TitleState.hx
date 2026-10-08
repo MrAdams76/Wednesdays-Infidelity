@@ -113,8 +113,8 @@ class TitleState extends MusicBeatState
 			if (FlxG.sound.music == null)
 			{
 				FlxG.sound.playMusic(Paths.music('freakyMenu'), 0);
-				FlxG.sound.music.loopTime = 15920;
-				FlxG.sound.music.fadeIn(4, 0, 0.7);
+				if (FlxG.sound.music != null) FlxG.sound.music.loopTime = 15920;
+				if (FlxG.sound.music != null) FlxG.sound.music.fadeIn(4, 0, 0.7);
 			}
 		}
 
@@ -520,7 +520,7 @@ class TitleState extends MusicBeatState
 			FlxG.camera.flash(FlxColor.BLACK, 2.3, null, true);
 			FlxG.camera.zoom = 1.2;
 
-			FlxG.sound.music.time = 15800;
+			if (FlxG.sound.music != null) FlxG.sound.music.time = 15800;
 			FlxTween.tween(FlxG.camera, {zoom: 1}, 1.8, {ease: FlxEase.circOut});
 
 			remove(credGroup);
