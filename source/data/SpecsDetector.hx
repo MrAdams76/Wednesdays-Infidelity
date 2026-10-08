@@ -1,9 +1,13 @@
 package data;
 
 #if cpp
+#if !ios
 import cpp.ConstCharStar;
+#end
 import cpp.Native;
+#if !ios
 import cpp.UInt64;
+#end
 #end
 import flixel.FlxG;
 import lime.app.Application;
@@ -57,7 +61,7 @@ class SpecsDetector extends MusicBeatState
 		super.update(elapsed);
 	}
 
-	function messageBox(title:ConstCharStar = null, msg:ConstCharStar = null)
+	function messageBox(title:String = null, msg:String = null)
 	{
 		#if windows
 		var msgID:Int = untyped MessageBox(null, msg, title, untyped __cpp__("MB_ICONQUESTION | MB_YESNO"));
