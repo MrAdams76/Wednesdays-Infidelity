@@ -5,7 +5,6 @@ import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
-import openfl.Assets;
 
 /**
  * Lightweight iOS title-screen fallback. Keeps original artwork while avoiding
@@ -26,7 +25,7 @@ class IOSTitleState extends FlxState
         // Load one image at a time and report missing assets instead of passing
         // invalid image paths to FlxSprite.loadGraphic.
         var bgPath = Paths.image("Spiral Shader Still");
-        if (Assets.exists(bgPath))
+        if (bgPath != null)
         {
             var bg = new FlxSprite().loadGraphic(bgPath);
             bg.setGraphicSize(FlxG.width, FlxG.height);
@@ -37,7 +36,7 @@ class IOSTitleState extends FlxState
             trace("iOS missing title spiral: " + bgPath);
 
         var mickeyPath = Paths.image("mickeysangre", "preload");
-        if (Assets.exists(mickeyPath))
+        if (mickeyPath != null)
         {
             var mickey = new FlxSprite().loadGraphic(mickeyPath);
             mickey.screenCenter();
