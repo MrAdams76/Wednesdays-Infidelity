@@ -77,6 +77,12 @@ class UnfinishedState extends MusicBeatState
 		warnText2.screenCenter();
 		warnText2.y += 80;
 
+		#if ios
+		var mobileContinue = new FlxText(0, FlxG.height - 110, FlxG.width, '[ CONTINUE ]', 38);
+		mobileContinue.setFormat(null, 38, FlxColor.YELLOW, CENTER);
+		add(mobileContinue);
+		#end
+
 		FlxTween.tween(FlxG.camera, {alpha: 1}, 1, {
 			onComplete: function(_:FlxTween)
 			{
@@ -97,6 +103,11 @@ class UnfinishedState extends MusicBeatState
 		if (canPress && (touchContinue || FlxG.keys.justPressed.SPACE || FlxG.keys.justPressed.ENTER))
 		{
 			canPress = false;
+
+			#if ios
+			FlxG.switchState(new TitleState());
+			return;
+			#end
 
 			FlxTween.cancelTweensOf(FlxG.camera);
 
