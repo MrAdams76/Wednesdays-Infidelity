@@ -229,7 +229,7 @@ class Paths
 
 	static public function getTextFromFile(key:String):String
 	{
-		#if sys
+		#if (sys && !ios)
 		if (FileSystem.exists(getPreloadPath(key)))
 			return File.getContent(getPreloadPath(key));
 
@@ -324,7 +324,7 @@ class Paths
 		}
 		if (!currentTrackedSounds.exists(assetKey))
 			currentTrackedSounds.set(assetKey, OpenFlAssets.getSound(assetKey));
-		localTrackedAssets.push(key);
+		localTrackedAssets.push(assetKey);
 		return currentTrackedSounds.get(assetKey);
 		#else
 		var gottenPath:String = assetKey.substring(assetKey.indexOf(':') + 1);
