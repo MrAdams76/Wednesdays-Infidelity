@@ -372,7 +372,7 @@ class MainMenuState extends MusicBeatState
 					selectedSomethin = false;
 				}, function()
 				{
-					#if cpp
+					#if windows
 					CppAPI._setWindowLayered();
 
 					var numTween:NumTween = FlxTween.num(1, 0, 1, {
