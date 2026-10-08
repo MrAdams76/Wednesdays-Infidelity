@@ -47,7 +47,6 @@ workflows:
           haxelib install hxp --quiet
           haxelib install format --quiet
           haxelib install flxanimate 1.2.0 --quiet
-          haxelib install hxCodec 2.5.1 --quiet
           haxelib set lime "$LIME_VERSION"
           haxelib set openfl "$OPENFL_VERSION"
           haxelib set flixel "$FLIXEL_VERSION"
@@ -56,28 +55,7 @@ workflows:
           haxelib set hscript "$HSCRIPT_VERSION"
           haxelib set hxcpp "$HXCPP_VERSION"
           haxelib set flxanimate 1.2.0
-          haxelib set hxCodec 2.5.1
           haxelib list
-      - name: Guard desktop Windows APIs
-        script: |
-          set -euo pipefail
-          cd "$CM_BUILD_DIR"
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path("source/data/CppAPI.hx")
-          if path.exists():
-              source = path.read_text()
-              methods = ("setWindowColorMode", "setWindowAlpha", "_setWindowLayered")
-              lines = []
-              for line in source.splitlines(keepends=True):
-                  if any("WindowsData." + method + "(" in line for method in methods):
-                      if not line.strip().endswith(";"):
-                          raise RuntimeError("Unsupported multiline Windows API call")
-                      lines.extend(["#if windows\n", line, "#end\n"])
-                  else:
-                      lines.append(line)
-              path.write_text("".join(lines))
-          PY
       - name: Disable desktop-only VLC on iOS
         script: |
           set -euo pipefail
