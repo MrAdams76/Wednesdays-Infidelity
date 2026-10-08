@@ -87,6 +87,12 @@ class TitleState extends MusicBeatState
 
 		curWacky = FlxG.random.getObject(getIntroTextShit());
 
+		#if ios
+		var tapButton = new FlxText(0, FlxG.height - 110, FlxG.width, '[ TAP TO START ]', 40);
+		tapButton.setFormat(null, 40, FlxColor.WHITE, CENTER);
+		add(tapButton);
+		#end
+
 		new FlxTimer().start(1, function(tmr:FlxTimer)
 		{
 			startIntro();
@@ -115,6 +121,10 @@ class TitleState extends MusicBeatState
 		Conductor.changeBPM(102);
 		persistentUpdate = true;
 
+		#if ios
+		// Avoid GPU shader startup crashes until iOS shaders are validated.
+		ClientPrefs.shaders = false;
+		#end
 		if (ClientPrefs.shaders)
 		{
 			if (ClientPrefs.intensiveShaders)
