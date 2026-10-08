@@ -30,6 +30,10 @@ class SpecsDetector extends MusicBeatState
 
 	function checkSpecs():Bool
 	{
+		#if ios
+		// iOS devices do not use the desktop RAM compatibility gate.
+		return true;
+		#else
 		var cpu:Bool = Capabilities.supports64BitProcesses;
 		var ram:UInt64 = CppAPI.obtainRAM();
 
@@ -45,6 +49,7 @@ class SpecsDetector extends MusicBeatState
 		}
 
 		return true;
+		#end
 	}
 
 	override public function update(elapsed:Float)
