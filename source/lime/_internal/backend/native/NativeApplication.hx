@@ -235,8 +235,10 @@ class NativeApplication
 
 			case TRACKBALL_MOVE:
 				var joystick = Joystick.devices.get(joystickEventInfo.id);
+				#if !ios
 				if (joystick != null)
 					joystick.onTrackballMove.dispatch(joystickEventInfo.index, joystickEventInfo.x, joystickEventInfo.y);
+				#end
 
 			case BUTTON_DOWN:
 				var joystick = Joystick.devices.get(joystickEventInfo.id);
