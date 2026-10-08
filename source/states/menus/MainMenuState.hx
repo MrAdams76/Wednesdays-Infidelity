@@ -71,6 +71,9 @@ class MainMenuState extends MusicBeatState
 	var camFollow:FlxObject;
 	var camFollowPos:FlxObject;
 	var resetText:FlxText;
+	#if ios
+	private var mobileNav:Array<FlxText> = [];
+	#end
 
 	@:isVar
 	var keyCombos(default, set):Map<Array<FlxKey>, Void->Void> = [];
@@ -271,6 +274,24 @@ class MainMenuState extends MusicBeatState
 			FlxTween.color(resetText, 1, FlxColor.WHITE, FlxColor.YELLOW, {type: PINGPONG});
 
 		changeItem();
+		#if ios
+		var navLabels = ['UP', 'DOWN', 'SELECT', 'BACK'];
+		for (i in 0...navLabels.length)
+		{
+			var bx:Float = FlxG.width * (0.03 + i * 0.245);
+			var bg = new FlxSprite(bx, FlxG.height - 112).makeGraphic(Std.int(FlxG.width * 0.22), 90, FlxColor.BLACK);
+			bg.alpha = 0.8;
+			bg.scrollFactor.set();
+			bg.cameras = [camAchievement];
+			add(bg);
+			var label = new FlxText(bx, FlxG.height - 92, FlxG.width * 0.22, navLabels[i], 28);
+			label.setFormat(null, 28, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			label.scrollFactor.set();
+			label.cameras = [camAchievement];
+			add(label);
+			mobileNav.push(label);
+		}
+		#end
 
 		super.create();
 	}
@@ -290,21 +311,42 @@ class MainMenuState extends MusicBeatState
 		var lerpVal:Float = CoolUtil.boundTo(elapsed * 5.6, 0, 1);
 		camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x, camFollow.x, lerpVal), FlxMath.lerp(camFollowPos.y, camFollow.y, lerpVal));
 
+		#if ios
+		var mobileUp = false;
+		var mobileDown = false;
+		var mobileSelect = false;
 		if (!selectedSomethin)
 		{
-			if (controls.UI_UP_P)
+			for (touch in FlxG.touches.list)
+			{
+				if (!touch.justPressed) continue;
+				var point = touch.getScreenPosition(camAchievement);
+				if (point.y < FlxG.height - 125) continue;
+				switch (Std.int(point.x / (FlxG.width * 0.245)))
+				{
+					case 0: mobileUp = true;
+					case 1: mobileDown = true;
+					case 2: mobileSelect = true;
+					case 3 | 4: FlxG.switchState(new TitleState()); return;
+				}
+			}
+		}
+		#end
+		if (!selectedSomethin)
+		{
+			if (controls.UI_UP_P #if ios || mobileUp #end)
 			{
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				changeItem(-1);
 			}
 
-			if (controls.UI_DOWN_P)
+			if (controls.UI_DOWN_P #if ios || mobileDown #end)
 			{
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				changeItem(1);
 			}
 
-			if (controls.ACCEPT)
+			if (controls.ACCEPT #if ios || mobileSelect #end)
 			{
 				if (optionShit[curSelected] == 'discord')
 				{
@@ -525,9 +567,9 @@ class MainMenuState extends MusicBeatState
 		for (sound in FlxG.sound.list)
 			sound.stop();
 
-		FlxG.sound.music.stop();
+		if (FlxG.sound.music != null) FlxG.sound.music.stop();
 
-		Main.fpsVar.visible = false;
+		if (Main.fpsVar != null) Main.fpsVar.visible = false;
 
 		FlxG.sound.volume = 1;
 
