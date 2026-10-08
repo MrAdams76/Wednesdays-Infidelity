@@ -76,11 +76,12 @@ class TitleState extends MusicBeatState
 	{
 		// DiscordClient.changePresence("In the Menus", null);
 
-		Main.fpsVar.visible = ClientPrefs.showFPS;
-
-		Main.fpsVar.alpha = 0;
-
-		FlxTween.tween(Main.fpsVar, {alpha: 1}, 1);
+		if (Main.fpsVar != null)
+		{
+			Main.fpsVar.visible = ClientPrefs.showFPS;
+			Main.fpsVar.alpha = 0;
+			FlxTween.tween(Main.fpsVar, {alpha: 1}, 1);
+		}
 
 		Lib.application.window.title = "Wednesday's Infidelity - Title";
 
