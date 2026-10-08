@@ -399,7 +399,8 @@ class WarningState extends MusicBeatState
 		// Diagnostic: isolate iOS warning-screen confirmation effects.
 		// Avoid sound playback, flicker, and settings I/O in this test build.
 		// Bypass desktop CustomFadeTransition while diagnosing iOS state crashes.
-		FlxG.switchState(new UnfinishedState());
+		// Diagnostic: go directly to the title, skipping UnfinishedState.
+		FlxG.switchState(new TitleState());
 		#else
 		FlxTween.tween(camGame, {alpha: 0}, 1);
 		FlxTween.tween(camHUD, {alpha: 0}, 1);
