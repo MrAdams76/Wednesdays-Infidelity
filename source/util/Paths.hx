@@ -1,7 +1,7 @@
 package util;
 
 import data.DataType;
-import flash.media.Sound;
+import openfl.media.Sound;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.graphics.FlxGraphic;
@@ -313,30 +313,26 @@ class Paths
 
 	public static var currentTrackedSounds:Map<String, Sound> = [];
 
-	public static function returnSound(path:String, key:String, ?library:String)
+	public static function returnSound(path:String, key:String, ?library:String):Sound
 	{
-		var file = null;
-		if (FileSystem.exists(file))
+		var assetKey:String = getPath('$path/$key.$SOUND_EXT', SOUND, library);
+		#if ios
+		if (!OpenFlAssets.exists(assetKey, SOUND))
 		{
-			if (!currentTrackedSounds.exists(file))
-			{
-				currentTrackedSounds.set(file, Sound.fromFile(file));
-			}
-			localTrackedAssets.push(key);
-			return currentTrackedSounds.get(file);
+			trace('Missing iOS audio asset: ' + assetKey);
+			return null;
 		}
-
-		// I hate this so god damn much
-		var gottenPath:String = getPath('$path/$key.$SOUND_EXT', SOUND, library);
-		gottenPath = gottenPath.substring(gottenPath.indexOf(':') + 1, gottenPath.length);
-		// trace(gottenPath);
+		if (!currentTrackedSounds.exists(assetKey))
+			currentTrackedSounds.set(assetKey, OpenFlAssets.getSound(assetKey));
+		localTrackedAssets.push(key);
+		return currentTrackedSounds.get(assetKey);
+		#else
+		var gottenPath:String = assetKey.substring(assetKey.indexOf(':') + 1);
 		if (!currentTrackedSounds.exists(gottenPath))
 			currentTrackedSounds.set(gottenPath, Sound.fromFile('./' + gottenPath));
-		// #else
-		// currentTrackedSounds.set(gottenPath, OpenFlAssets.getSound(getPath('$path/$key.$SOUND_EXT', SOUND, library)));
-		// #end
 		localTrackedAssets.push(key);
 		return currentTrackedSounds.get(gottenPath);
+		#end
 	}
 
 	inline static public function getAtlasFromData(key:String, data:DataType)
