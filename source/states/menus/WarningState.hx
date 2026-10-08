@@ -371,6 +371,11 @@ class WarningState extends MusicBeatState
 		if (!canMove || !canPressSpace) return;
 		canMove = false;
 
+		#if ios
+		// Diagnostic: isolate iOS warning-screen confirmation effects.
+		// Avoid sound playback, flicker, and settings I/O in this test build.
+		MusicBeatState.switchState(new UnfinishedState());
+		#else
 		FlxTween.tween(camGame, {alpha: 0}, 1);
 		FlxTween.tween(camHUD, {alpha: 0}, 1);
 
@@ -384,5 +389,6 @@ class WarningState extends MusicBeatState
 
 			MusicBeatState.switchState(new UnfinishedState());
 		});
+		#end
 	}
 }
