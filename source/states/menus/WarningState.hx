@@ -167,7 +167,7 @@ class WarningState extends MusicBeatState
 
 		var text:FlxText = new FlxText(560 + 700, 650, 700, "", 21);
 		text.setFormat("VCR OSD Mono", 30, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-		text.applyMarkup("Press $SPACE$ to continue.", [new FlxTextFormatMarkerPair(new FlxTextFormat(FlxColor.YELLOW), "$")]);
+		text.applyMarkup("Tap the bottom of the screen to continue.", [new FlxTextFormatMarkerPair(new FlxTextFormat(FlxColor.YELLOW), "$")]);
 		text.cameras = [camHUD];
 		add(text);
 
@@ -312,6 +312,37 @@ class WarningState extends MusicBeatState
 			camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x, camFollow.x, lerpVal), FlxMath.lerp(camFollowPos.y, camFollow.y, lerpVal));
 		}
 
+		#if ios
+		// Touch selection and confirmation on the accessibility warning screen.
+		if (canMove)
+		{
+			for (touch in FlxG.touches.list)
+			{
+				if (!touch.justPressed) continue;
+				var point = touch.getScreenPosition(camHUD);
+				if (canPressSpace && point.y > FlxG.height * 0.79)
+				{
+					continueFromWarning();
+					return;
+				}
+				var optionPoint = touch.getScreenPosition(camGame);
+				for (i in 0...grpOptions.members.length)
+				{
+					var item = grpOptions.members[i];
+					if (item != null && optionPoint.y >= item.y - 35 && optionPoint.y <= item.y + item.height + 35)
+					{
+						curSelected = i;
+						changeSelection();
+						curOption.setValue(!curOption.getValue());
+						curOption.change();
+						reloadCheckboxes();
+						break;
+					}
+				}
+			}
+		}
+		#end
+
 		if (canMove)
 		{
 			if (controls.UI_UP_P)
@@ -330,22 +361,28 @@ class WarningState extends MusicBeatState
 
 			if (FlxG.keys.justPressed.SPACE && canPressSpace)
 			{
-				canMove = false;
-
-				FlxTween.tween(camGame, {alpha: 0}, 1);
-				FlxTween.tween(camHUD, {alpha: 0}, 1);
-
-				FlxG.sound.play(Paths.sound('confirmMenu'));
-
-				FlxFlicker.flicker(infoTexts[1]);
-
-				new FlxTimer().start(1.2, function(tmr:FlxTimer)
-				{
-					ClientPrefs.saveSettings();
-
-					MusicBeatState.switchState(new UnfinishedState());
-				});
+				continueFromWarning();
 			}
 		}
+	}
+
+	private function continueFromWarning():Void
+	{
+		if (!canMove || !canPressSpace) return;
+		canMove = false;
+
+		FlxTween.tween(camGame, {alpha: 0}, 1);
+		FlxTween.tween(camHUD, {alpha: 0}, 1);
+
+		FlxG.sound.play(Paths.sound('confirmMenu'));
+
+		FlxFlicker.flicker(infoTexts[1]);
+
+		new FlxTimer().start(1.2, function(tmr:FlxTimer)
+		{
+			ClientPrefs.saveSettings();
+
+			MusicBeatState.switchState(new UnfinishedState());
+		});
 	}
 }
