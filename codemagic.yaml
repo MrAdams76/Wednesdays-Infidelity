@@ -6,8 +6,8 @@ workflows:
     environment:
       xcode: 16.4
       vars:
-        LIME_VERSION: "8.3.2"
-        OPENFL_VERSION: "9.5.2"
+        LIME_VERSION: "8.2.2"
+        OPENFL_VERSION: "9.4.1"
         FLIXEL_VERSION: "4.11.0"
         FLIXEL_ADDONS_VERSION: "2.11.0"
         FLIXEL_UI_VERSION: "2.4.0"
