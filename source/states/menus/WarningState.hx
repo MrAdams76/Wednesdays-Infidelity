@@ -21,6 +21,9 @@ import gameObjects.AttachedText;
 import gameObjects.CheckboxThingie;
 import gameObjects.Option;
 import openfl.Lib;
+#if ios
+import openfl.Assets;
+#end
 import util.CoolUtil;
 
 class WarningState extends MusicBeatState
@@ -154,7 +157,18 @@ class WarningState extends MusicBeatState
 		for (i in 0...labels.length)
 		{
 			var bx:Float = FlxG.width * (0.03 + i * 0.245);
-			var bg = new FlxSprite(bx, FlxG.height - 120).makeGraphic(Std.int(FlxG.width * 0.22), 90, FlxColor.BLACK);
+			var bg = new FlxSprite(bx, FlxG.height - 120);
+			// Reuse MarioMaster's original Android virtual-pad atlas on iOS.
+			// Atlas is 4 columns of 396x135 cells; UP=2, DOWN=1, A=4, B=5.
+			var atlasPath = "assets/images/androidcontrols/virtualpad.png";
+			if (Assets.exists(atlasPath))
+			{
+				bg.loadGraphic(Assets.getBitmapData(atlasPath), true, 396, 135);
+				bg.animation.frameIndex = [2, 1, 4, 5][i];
+				bg.setGraphicSize(Std.int(FlxG.width * 0.22), 90);
+				bg.updateHitbox();
+			}
+			else bg.makeGraphic(Std.int(FlxG.width * 0.22), 90, FlxColor.BLACK);
 			bg.alpha = 0.75;
 			bg.cameras = [camHUD];
 			add(bg);
