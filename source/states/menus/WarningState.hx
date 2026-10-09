@@ -399,11 +399,17 @@ class WarningState extends MusicBeatState
 		canMove = false;
 
 		#if ios
-		// Diagnostic: isolate iOS warning-screen confirmation effects.
-		// Avoid sound playback, flicker, and settings I/O in this test build.
-		// Bypass desktop CustomFadeTransition while diagnosing iOS state crashes.
-		// Diagnostic: go directly to the title, skipping UnfinishedState.
-		FlxG.switchState(new IOSTitleState());
+		// iOS diagnostic: deliberately stay in WarningState after CONTINUE.
+		// This distinguishes a native touch-event abort from a crash caused by
+		// FlxG.switchState, camera teardown, or IOSTitleState.create().
+		if (mobileButtons.length > 3)
+		{
+			mobileButtons[3].text = "TAP OK";
+			mobileButtons[3].color = FlxColor.LIME;
+		}
+		warnText.text = "Touch received. No state switch.\nIf this screen stays open, touch works and the crash is in the transition or next state.";
+		warnText.color = FlxColor.LIME;
+		trace("IOS_DIAGNOSTIC: CONTINUE touch handled without switching state");
 		#else
 		FlxTween.tween(camGame, {alpha: 0}, 1);
 		FlxTween.tween(camHUD, {alpha: 0}, 1);
