@@ -423,12 +423,17 @@ class WarningState extends MusicBeatState
 		ClientPrefs.shaders = false;
 		ClientPrefs.intensiveShaders = false;
 		ClientPrefs.shake = false;
-		// Defer the state change until after the touch event has finished.
-		// Keep the original desktop transition path unchanged.
-		new FlxTimer().start(0.2, function(tmr:FlxTimer)
-		{
-			FlxG.switchState(new IOSTitleState());
-		});
+		// Touch-crash isolation build: do not switch states yet.
+		// If this screen stays alive after CONTINUE, touch delivery works
+		// and the crash is likely in the title-state transition/loading.
+		// If it still exits, investigate native Lime/SDL touch dispatch.
+		var diagnostic = new FlxText(0, FlxG.height * 0.45, FlxG.width,
+			"TOUCH RECEIVED - APP STILL RUNNING", 34);
+		diagnostic.setFormat(null, 34, FlxColor.LIME, CENTER,
+			FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		diagnostic.cameras = [camHUD];
+		add(diagnostic);
+		trace("iOS touch diagnostic: CONTINUE processed without state transition");
 		#else
 		FlxTween.tween(camGame, {alpha: 0}, 1);
 		FlxTween.tween(camHUD, {alpha: 0}, 1);
