@@ -24,7 +24,7 @@ class Init extends FlxState
 	{
 		super.create();
 
-		#if cpp
+		#if windows
 		CppAPI.darkMode();
 		#end
 
@@ -69,6 +69,7 @@ class Init extends FlxState
 
 		Progression.load();
 
+		#if !ios
 		Paths.excludeAsset('assets/preload/images/kevin_normal.png');
 		CoolUtil.precacheImage('kevin_normal', 'preload');
 
@@ -90,6 +91,7 @@ class Init extends FlxState
 
 		Paths.excludeAsset('assets/shared/images/NOTE_assets.png');
 		CoolUtil.precacheImage('NOTE_assets', 'shared');
+		#end
 
 		FlxG.switchState(Type.createInstance(SpecsDetector, []));
 	}

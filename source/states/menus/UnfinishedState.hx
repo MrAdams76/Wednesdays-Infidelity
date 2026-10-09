@@ -66,7 +66,7 @@ class UnfinishedState extends MusicBeatState
 		warnText.y -= 230;
 
 		var warnText2:FlxText = new FlxText(0, 850, FlxG.width,
-			"The mod has been leaked twice, the most recent being this monday where a member of the team had an anger attack and leaked a video of the new unfinished content of the mod, because of this we had to speed up the process and get it out quickly this wednesday. it will later receive a patch of the missing content, for now it will be receiving fixes in bugs and defective mechanics. \n\n\n\nPress Enter to Continue",
+			"The mod has been leaked twice, the most recent being this monday where a member of the team had an anger attack and leaked a video of the new unfinished content of the mod, because of this we had to speed up the process and get it out quickly this wednesday. it will later receive a patch of the missing content, for now it will be receiving fixes in bugs and defective mechanics. \n\n\n\nTap to Continue",
 			21);
 
 		warnText2.setFormat("VCR OSD Mono", 35, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
@@ -76,6 +76,12 @@ class UnfinishedState extends MusicBeatState
 
 		warnText2.screenCenter();
 		warnText2.y += 80;
+
+		#if ios
+		var mobileContinue = new FlxText(0, FlxG.height - 110, FlxG.width, '[ CONTINUE ]', 38);
+		mobileContinue.setFormat(null, 38, FlxColor.YELLOW, CENTER);
+		add(mobileContinue);
+		#end
 
 		FlxTween.tween(FlxG.camera, {alpha: 1}, 1, {
 			onComplete: function(_:FlxTween)
@@ -89,9 +95,19 @@ class UnfinishedState extends MusicBeatState
 	{
 		super.update(elapsed);
 
-		if (canPress && (FlxG.keys.justPressed.SPACE || FlxG.keys.justPressed.ENTER))
+		var touchContinue:Bool = false;
+		#if ios
+		for (touch in FlxG.touches.list)
+			if (touch.justPressed) touchContinue = true;
+		#end
+		if (canPress && (touchContinue || FlxG.keys.justPressed.SPACE || FlxG.keys.justPressed.ENTER))
 		{
 			canPress = false;
+
+			#if ios
+			FlxG.switchState(new TitleState());
+			return;
+			#end
 
 			FlxTween.cancelTweensOf(FlxG.camera);
 

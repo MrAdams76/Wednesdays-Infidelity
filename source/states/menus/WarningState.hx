@@ -5,6 +5,7 @@ import flixel.FlxCamera;
 import flixel.FlxG;
 import flixel.FlxObject;
 import flixel.FlxState;
+import flixel.FlxSprite;
 import flixel.effects.FlxFlicker;
 import flixel.graphics.FlxGraphic;
 import flixel.group.FlxGroup.FlxTypedGroup;
@@ -20,6 +21,9 @@ import gameObjects.AttachedText;
 import gameObjects.CheckboxThingie;
 import gameObjects.Option;
 import openfl.Lib;
+#if ios
+import openfl.Assets;
+#end
 import util.CoolUtil;
 
 class WarningState extends MusicBeatState
@@ -46,6 +50,10 @@ class WarningState extends MusicBeatState
 	private var optionTitle:Alphabet;
 	private var warnTitle:FlxText;
 	private var infoTexts:Array<FlxText> = [];
+	#if ios
+	private var mobileButtons:Array<FlxText> = [];
+	private var mobileHitboxes:Array<FlxSprite> = [];
+	#end
 
 	override function create()
 	{
@@ -53,8 +61,11 @@ class WarningState extends MusicBeatState
 
 		if (ClientPrefs.doNotShowWarnings)
 		{
+			#if ios
+			FlxG.switchState(new IOSTitleState());
+			#else
 			MusicBeatState.switchState(new TitleState());
-
+			#end
 			return;
 		}
 
@@ -134,7 +145,46 @@ class WarningState extends MusicBeatState
 		addOption(option);
 
 		genOptions();
+		#if ios
+		addMobileButtons();
+		#end
 	}
+
+	#if ios
+	private function addMobileButtons():Void
+	{
+		var labels = ['UP', 'DOWN', 'SELECT', 'CONTINUE'];
+		for (i in 0...labels.length)
+		{
+			var bx:Float = FlxG.width * (0.03 + i * 0.245);
+			var bg = new FlxSprite(bx, FlxG.height - 120);
+			// Reuse MarioMaster's original Android virtual-pad atlas on iOS.
+			// Atlas is 4 columns of 396x135 cells; UP=2, DOWN=1, A=4, B=5.
+			var atlasPath = "assets/images/androidcontrols/virtualpad.png";
+			if (Assets.exists(atlasPath))
+			{
+				bg.loadGraphic(Assets.getBitmapData(atlasPath), true, 396, 135);
+				bg.animation.frameIndex = [2, 1, 4, 5][i];
+				bg.setGraphicSize(Std.int(FlxG.width * 0.22), 90);
+				bg.updateHitbox();
+			}
+			else bg.makeGraphic(Std.int(FlxG.width * 0.22), 90, FlxColor.BLACK);
+			bg.alpha = 0.75;
+			bg.cameras = [camHUD];
+			add(bg);
+			mobileHitboxes.push(bg);
+			var b = new FlxText(bx, FlxG.height - 105, FlxG.width * 0.22, labels[i], 27);
+			b.setFormat(null, 27, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			b.borderSize = 3;
+			b.cameras = [camHUD];
+			// Original Android artwork already contains button symbols.
+			// Only display our text fallback if the atlas was unavailable.
+			b.visible = !Assets.exists(atlasPath);
+			add(b);
+			mobileButtons.push(b);
+		}
+	}
+	#end
 
 	function addOption(option:Option)
 	{
@@ -167,7 +217,7 @@ class WarningState extends MusicBeatState
 
 		var text:FlxText = new FlxText(560 + 700, 650, 700, "", 21);
 		text.setFormat("VCR OSD Mono", 30, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-		text.applyMarkup("Press $SPACE$ to continue.", [new FlxTextFormatMarkerPair(new FlxTextFormat(FlxColor.YELLOW), "$")]);
+		text.applyMarkup("Tap the bottom of the screen to continue.", [new FlxTextFormatMarkerPair(new FlxTextFormat(FlxColor.YELLOW), "$")]);
 		text.cameras = [camHUD];
 		add(text);
 
@@ -312,6 +362,33 @@ class WarningState extends MusicBeatState
 			camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x, camFollow.x, lerpVal), FlxMath.lerp(camFollowPos.y, camFollow.y, lerpVal));
 		}
 
+		#if ios
+		if (canMove)
+		{
+			for (touch in FlxG.touches.list)
+			{
+				if (!touch.justPressed) continue;
+				// Android-port-inspired hitbox controls: each visible button
+				// owns its own touch region rather than dividing the screen.
+				for (index in 0...mobileHitboxes.length)
+				{
+					if (!touch.overlaps(mobileHitboxes[index], camHUD)) continue;
+					switch (index)
+					{
+						case 0: changeSelection(-1);
+						case 1: changeSelection(1);
+						case 2:
+							curOption.setValue(!curOption.getValue());
+							curOption.change();
+							reloadCheckboxes();
+						case 3: continueFromWarning();
+					}
+					return;
+				}
+			}
+		}
+		#end
+
 		if (canMove)
 		{
 			if (controls.UI_UP_P)
@@ -330,22 +407,42 @@ class WarningState extends MusicBeatState
 
 			if (FlxG.keys.justPressed.SPACE && canPressSpace)
 			{
-				canMove = false;
-
-				FlxTween.tween(camGame, {alpha: 0}, 1);
-				FlxTween.tween(camHUD, {alpha: 0}, 1);
-
-				FlxG.sound.play(Paths.sound('confirmMenu'));
-
-				FlxFlicker.flicker(infoTexts[1]);
-
-				new FlxTimer().start(1.2, function(tmr:FlxTimer)
-				{
-					ClientPrefs.saveSettings();
-
-					MusicBeatState.switchState(new UnfinishedState());
-				});
+				continueFromWarning();
 			}
 		}
+	}
+
+	private function continueFromWarning():Void
+	{
+		if (!canMove || !canPressSpace) return;
+		canMove = false;
+
+		#if ios
+		// Mobile-friendly startup experiment inspired by the optimized Android port:
+		// avoid costly shader and camera-shake effects during the first transition.
+		ClientPrefs.shaders = false;
+		ClientPrefs.intensiveShaders = false;
+		ClientPrefs.shake = false;
+		// Defer the state change until after the touch event has finished.
+		// Keep the original desktop transition path unchanged.
+		new FlxTimer().start(0.2, function(tmr:FlxTimer)
+		{
+			FlxG.switchState(new IOSTitleState());
+		});
+		#else
+		FlxTween.tween(camGame, {alpha: 0}, 1);
+		FlxTween.tween(camHUD, {alpha: 0}, 1);
+
+		FlxG.sound.play(Paths.sound('confirmMenu'));
+
+		FlxFlicker.flicker(infoTexts[1]);
+
+		new FlxTimer().start(1.2, function(tmr:FlxTimer)
+		{
+			ClientPrefs.saveSettings();
+
+			MusicBeatState.switchState(new UnfinishedState());
+		});
+		#end
 	}
 }

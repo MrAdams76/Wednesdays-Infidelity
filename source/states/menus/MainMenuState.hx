@@ -28,6 +28,9 @@ import lime.app.Application;
 import lime.graphics.Image;
 import lime.tools.WindowData;
 import openfl.Lib;
+#if ios
+import openfl.Assets;
+#end
 import openfl.filters.BitmapFilter;
 import openfl.filters.ShaderFilter;
 import states.editors.MasterEditorMenu;
@@ -71,6 +74,10 @@ class MainMenuState extends MusicBeatState
 	var camFollow:FlxObject;
 	var camFollowPos:FlxObject;
 	var resetText:FlxText;
+	#if ios
+	private var mobileNav:Array<FlxText> = [];
+	private var mobileNavHitboxes:Array<FlxSprite> = [];
+	#end
 
 	@:isVar
 	var keyCombos(default, set):Map<Array<FlxKey>, Void->Void> = [];
@@ -271,6 +278,36 @@ class MainMenuState extends MusicBeatState
 			FlxTween.color(resetText, 1, FlxColor.WHITE, FlxColor.YELLOW, {type: PINGPONG});
 
 		changeItem();
+		#if ios
+		var navLabels = ['UP', 'DOWN', 'SELECT', 'BACK'];
+		for (i in 0...navLabels.length)
+		{
+			var bx:Float = FlxG.width * (0.03 + i * 0.245);
+			var bg = new FlxSprite(bx, FlxG.height - 112);
+			var atlasPath = "assets/images/androidcontrols/virtualpad.png";
+			if (Assets.exists(atlasPath))
+			{
+				bg.loadGraphic(Assets.getBitmapData(atlasPath), true, 396, 135);
+				bg.animation.frameIndex = [2, 1, 4, 5][i];
+				bg.setGraphicSize(Std.int(FlxG.width * 0.22), 90);
+				bg.updateHitbox();
+			}
+			else bg.makeGraphic(Std.int(FlxG.width * 0.22), 90, FlxColor.BLACK);
+			bg.alpha = 0.8;
+			bg.scrollFactor.set();
+			bg.cameras = [camAchievement];
+			add(bg);
+			mobileNavHitboxes.push(bg);
+			var label = new FlxText(bx, FlxG.height - 92, FlxG.width * 0.22, navLabels[i], 28);
+			label.setFormat(null, 28, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			label.scrollFactor.set();
+			label.cameras = [camAchievement];
+			// Avoid stacking old text labels over the imported Android artwork.
+			label.visible = !Assets.exists(atlasPath);
+			add(label);
+			mobileNav.push(label);
+		}
+		#end
 
 		super.create();
 	}
@@ -290,21 +327,45 @@ class MainMenuState extends MusicBeatState
 		var lerpVal:Float = CoolUtil.boundTo(elapsed * 5.6, 0, 1);
 		camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x, camFollow.x, lerpVal), FlxMath.lerp(camFollowPos.y, camFollow.y, lerpVal));
 
+		#if ios
+		var mobileUp = false;
+		var mobileDown = false;
+		var mobileSelect = false;
 		if (!selectedSomethin)
 		{
-			if (controls.UI_UP_P)
+			for (touch in FlxG.touches.list)
+			{
+				if (!touch.justPressed) continue;
+				for (index in 0...mobileNavHitboxes.length)
+				{
+					if (!touch.overlaps(mobileNavHitboxes[index], camAchievement)) continue;
+					switch (index)
+					{
+						case 0: mobileUp = true;
+						case 1: mobileDown = true;
+						case 2: mobileSelect = true;
+						case 3: FlxG.switchState(new IOSTitleState()); return;
+					}
+					break;
+				}
+			}
+		}
+		#end
+		if (!selectedSomethin)
+		{
+			if (controls.UI_UP_P #if ios || mobileUp #end)
 			{
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				changeItem(-1);
 			}
 
-			if (controls.UI_DOWN_P)
+			if (controls.UI_DOWN_P #if ios || mobileDown #end)
 			{
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				changeItem(1);
 			}
 
-			if (controls.ACCEPT)
+			if (controls.ACCEPT #if ios || mobileSelect #end)
 			{
 				if (optionShit[curSelected] == 'discord')
 				{
@@ -372,7 +433,7 @@ class MainMenuState extends MusicBeatState
 					selectedSomethin = false;
 				}, function()
 				{
-					#if cpp
+					#if windows
 					CppAPI._setWindowLayered();
 
 					var numTween:NumTween = FlxTween.num(1, 0, 1, {
@@ -525,9 +586,9 @@ class MainMenuState extends MusicBeatState
 		for (sound in FlxG.sound.list)
 			sound.stop();
 
-		FlxG.sound.music.stop();
+		if (FlxG.sound.music != null) FlxG.sound.music.stop();
 
-		Main.fpsVar.visible = false;
+		if (Main.fpsVar != null) Main.fpsVar.visible = false;
 
 		FlxG.sound.volume = 1;
 

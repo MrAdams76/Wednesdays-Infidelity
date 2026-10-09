@@ -76,15 +76,23 @@ class TitleState extends MusicBeatState
 	{
 		// DiscordClient.changePresence("In the Menus", null);
 
-		Main.fpsVar.visible = ClientPrefs.showFPS;
-
-		Main.fpsVar.alpha = 0;
-
-		FlxTween.tween(Main.fpsVar, {alpha: 1}, 1);
+		if (Main.fpsVar != null)
+		{
+			Main.fpsVar.visible = ClientPrefs.showFPS;
+			Main.fpsVar.alpha = 0;
+			FlxTween.tween(Main.fpsVar, {alpha: 1}, 1);
+		}
 
 		Lib.application.window.title = "Wednesday's Infidelity - Title";
 
 		curWacky = FlxG.random.getObject(getIntroTextShit());
+		if (curWacky == null || curWacky.length < 2) curWacky = ['Wednesday', 'Infidelity'];
+
+		#if ios
+		var tapButton = new FlxText(0, FlxG.height - 110, FlxG.width, '[ TAP TO START ]', 40);
+		tapButton.setFormat(null, 40, FlxColor.WHITE, CENTER);
+		add(tapButton);
+		#end
 
 		new FlxTimer().start(1, function(tmr:FlxTimer)
 		{
@@ -105,15 +113,20 @@ class TitleState extends MusicBeatState
 		{
 			if (FlxG.sound.music == null)
 			{
-				FlxG.sound.playMusic(Paths.music('freakyMenu'), 0);
-				FlxG.sound.music.loopTime = 15920;
-				FlxG.sound.music.fadeIn(4, 0, 0.7);
+				var menuMusic = Paths.music('freakyMenu');
+				if (menuMusic != null) FlxG.sound.playMusic(menuMusic, 0);
+				if (FlxG.sound.music != null) FlxG.sound.music.loopTime = 15920;
+				if (FlxG.sound.music != null) FlxG.sound.music.fadeIn(4, 0, 0.7);
 			}
 		}
 
 		Conductor.changeBPM(102);
 		persistentUpdate = true;
 
+		#if ios
+		// Avoid GPU shader startup crashes until iOS shaders are validated.
+		ClientPrefs.shaders = false;
+		#end
 		if (ClientPrefs.shaders)
 		{
 			if (ClientPrefs.intensiveShaders)
@@ -311,7 +324,8 @@ class TitleState extends MusicBeatState
 					}
 				}
 
-				FlxG.sound.play(Paths.sound('confirmMenu'), 0.7);
+				var confirmSound = Paths.sound('confirmMenu');
+				if (confirmSound != null) FlxG.sound.play(confirmSound, 0.7);
 
 				titleText.visible = false;
 				titleTextx.visible = false;
@@ -509,7 +523,7 @@ class TitleState extends MusicBeatState
 			FlxG.camera.flash(FlxColor.BLACK, 2.3, null, true);
 			FlxG.camera.zoom = 1.2;
 
-			FlxG.sound.music.time = 15800;
+			if (FlxG.sound.music != null) FlxG.sound.music.time = 15800;
 			FlxTween.tween(FlxG.camera, {zoom: 1}, 1.8, {ease: FlxEase.circOut});
 
 			remove(credGroup);

@@ -1,4 +1,15 @@
 package util;
+#if ios
+class DiscordClient
+{
+    public static var isInitialized:Bool = false;
+    public function new() {}
+    public static function initialize():Void { isInitialized = false; }
+    public static function shutdown():Void { isInitialized = false; }
+    public static function changePresence(details:String, state:Null<String>, ?smallImageKey:String, ?hasStartTimestamp:Bool, ?endTimestamp:Float):Void {}
+}
+#else
+
 
 import Sys.sleep;
 import discord_rpc.DiscordRpc;
@@ -100,3 +111,5 @@ class DiscordClient
 	}
 	#end
 }
+
+#end
