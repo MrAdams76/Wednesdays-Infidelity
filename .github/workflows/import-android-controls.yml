@@ -74,15 +74,42 @@ jobs:
                   print("Imported", target)
           PY
 
+      - name: Extract Android title and menu reference assets
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          prefix = "assets/assets/images/"
+          files = [
+              "Spiral Shader Still.png", "mickeysangre.png",
+              "menuBG.png", "menuDesat.png",
+              "mainmenu/menu_story_mode.png", "mainmenu/menu_story_mode.xml",
+              "mainmenu/menu_freeplay.png", "mainmenu/menu_freeplay.xml",
+              "mainmenu/menu_options.png", "mainmenu/menu_options.xml",
+              "mainmenu/menu_credits.png", "mainmenu/menu_credits.xml",
+          ]
+          with zipfile.ZipFile("reference.apk") as apk:
+              available = set(apk.namelist())
+              for name in files:
+                  source = prefix + name
+                  if source not in available:
+                      print("Reference missing:", name)
+                      continue
+                  dest = Path("assets/androidreference") / name
+                  dest.parent.mkdir(parents=True, exist_ok=True)
+                  dest.write_bytes(apk.read(source))
+                  print("Imported reference:", dest)
+          PY
+
       - name: Commit extracted assets to iOS branch
         run: |
           rm -f reference.apk
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/androidcontrols
+          git add assets/androidcontrols assets/androidreference
           if git diff --cached --quiet; then
             echo "No changes; Android controls are already up to date."
           else
-            git commit -m "Import original mobile controls from optimized Android APK"
+            git commit -m "Import Android mobile controls and title reference artwork"
             git push origin HEAD:ios/clean-baseline
           fi
