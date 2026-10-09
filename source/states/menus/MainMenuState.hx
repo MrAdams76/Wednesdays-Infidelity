@@ -302,6 +302,8 @@ class MainMenuState extends MusicBeatState
 			label.setFormat(null, 28, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 			label.scrollFactor.set();
 			label.cameras = [camAchievement];
+			// Avoid stacking old text labels over the imported Android artwork.
+			label.visible = !Assets.exists(atlasPath);
 			add(label);
 			mobileNav.push(label);
 		}
