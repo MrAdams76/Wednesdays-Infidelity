@@ -18,6 +18,7 @@ import openfl.events.Event;
 import openfl.events.UncaughtErrorEvent;
 import states.menus.*;
 
+@:headerCode('#include <stdlib.h>')
 class Main extends Sprite
 {
 	var gameWidth:Int = 1280; // Width of the game in pixels (might be less / more in actual pixels depending on your zoom).
@@ -40,6 +41,14 @@ class Main extends Sprite
 
 	public static function main():Void
 	{
+		#if ios
+		// SDL2 synthesizes mouse events from iOS finger taps by default.
+		// The device crash report aborts in Lime's MouseEventInfo dispatch.
+		// Disable only SDL's synthetic touch-to-mouse events, leaving
+		// native finger/touch events available to FlxG.touches.
+		untyped __cpp__('setenv("SDL_TOUCH_MOUSE_EVENTS", "0", 1)');
+		untyped __cpp__('setenv("SDL_MOUSE_TOUCH_EVENTS", "0", 1)');
+		#end
 		Lib.current.addChild(new Main());
 	}
 
