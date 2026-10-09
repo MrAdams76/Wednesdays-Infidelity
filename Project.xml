@@ -69,7 +69,7 @@
 
 	<!-- Original optimized Android virtual pad, loaded only on iOS -->
 	<assets path="assets/androidcontrols" rename="assets/images/androidcontrols" if="ios" />
-	<assets path="assets/androidreference" rename="assets/images/androidreference" if="ios" />
+	<!-- Optional Android reference art is imported separately; do not require its folder for Xcode generation. -->
 	<assets path="assets/fonts" embed='true'/>
 
 	<assets path='assets/menu codes.txt' rename='MENU CODES.txt' />
