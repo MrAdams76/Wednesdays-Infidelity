@@ -28,6 +28,9 @@ import lime.app.Application;
 import lime.graphics.Image;
 import lime.tools.WindowData;
 import openfl.Lib;
+#if ios
+import openfl.Assets;
+#end
 import openfl.filters.BitmapFilter;
 import openfl.filters.ShaderFilter;
 import states.editors.MasterEditorMenu;
@@ -73,6 +76,7 @@ class MainMenuState extends MusicBeatState
 	var resetText:FlxText;
 	#if ios
 	private var mobileNav:Array<FlxText> = [];
+	private var mobileNavHitboxes:Array<FlxSprite> = [];
 	#end
 
 	@:isVar
@@ -279,11 +283,21 @@ class MainMenuState extends MusicBeatState
 		for (i in 0...navLabels.length)
 		{
 			var bx:Float = FlxG.width * (0.03 + i * 0.245);
-			var bg = new FlxSprite(bx, FlxG.height - 112).makeGraphic(Std.int(FlxG.width * 0.22), 90, FlxColor.BLACK);
+			var bg = new FlxSprite(bx, FlxG.height - 112);
+			var atlasPath = "assets/images/androidcontrols/virtualpad.png";
+			if (Assets.exists(atlasPath))
+			{
+				bg.loadGraphic(Assets.getBitmapData(atlasPath), true, 396, 135);
+				bg.animation.frameIndex = [2, 1, 4, 5][i];
+				bg.setGraphicSize(Std.int(FlxG.width * 0.22), 90);
+				bg.updateHitbox();
+			}
+			else bg.makeGraphic(Std.int(FlxG.width * 0.22), 90, FlxColor.BLACK);
 			bg.alpha = 0.8;
 			bg.scrollFactor.set();
 			bg.cameras = [camAchievement];
 			add(bg);
+			mobileNavHitboxes.push(bg);
 			var label = new FlxText(bx, FlxG.height - 92, FlxG.width * 0.22, navLabels[i], 28);
 			label.setFormat(null, 28, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 			label.scrollFactor.set();
@@ -320,14 +334,17 @@ class MainMenuState extends MusicBeatState
 			for (touch in FlxG.touches.list)
 			{
 				if (!touch.justPressed) continue;
-				var point = touch.getScreenPosition(camAchievement);
-				if (point.y < FlxG.height - 125) continue;
-				switch (Std.int(point.x / (FlxG.width * 0.245)))
+				for (index in 0...mobileNavHitboxes.length)
 				{
-					case 0: mobileUp = true;
-					case 1: mobileDown = true;
-					case 2: mobileSelect = true;
-					case 3 | 4: FlxG.switchState(new TitleState()); return;
+					if (!touch.overlaps(mobileNavHitboxes[index], camAchievement)) continue;
+					switch (index)
+					{
+						case 0: mobileUp = true;
+						case 1: mobileDown = true;
+						case 2: mobileSelect = true;
+						case 3: FlxG.switchState(new IOSTitleState()); return;
+					}
+					break;
 				}
 			}
 		}
