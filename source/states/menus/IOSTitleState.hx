@@ -1,6 +1,7 @@
 package states.menus;
 
 import flixel.FlxG;
+import openfl.Assets;
 import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.text.FlxText;
@@ -25,9 +26,12 @@ class IOSTitleState extends FlxState
         // Load one image at a time and report missing assets instead of passing
         // invalid image paths to FlxSprite.loadGraphic.
         var bgPath = Paths.returnGraphic("Spiral Shader Still");
-        if (bgPath != null)
+        var androidSpiral = "assets/images/androidreference/Spiral Shader Still.png";
+        if (Assets.exists(androidSpiral) || bgPath != null)
         {
-            var bg = new FlxSprite().loadGraphic(bgPath);
+            var bg = new FlxSprite();
+            if (Assets.exists(androidSpiral)) bg.loadGraphic(Assets.getBitmapData(androidSpiral));
+            else bg.loadGraphic(bgPath);
             bg.setGraphicSize(FlxG.width, FlxG.height);
             bg.updateHitbox();
             add(bg);
@@ -36,9 +40,12 @@ class IOSTitleState extends FlxState
             trace("iOS missing title spiral: " + bgPath);
 
         var mickeyPath = Paths.returnGraphic("mickeysangre", "preload");
-        if (mickeyPath != null)
+        var androidMickey = "assets/images/androidreference/mickeysangre.png";
+        if (Assets.exists(androidMickey) || mickeyPath != null)
         {
-            var mickey = new FlxSprite().loadGraphic(mickeyPath);
+            var mickey = new FlxSprite();
+            if (Assets.exists(androidMickey)) mickey.loadGraphic(Assets.getBitmapData(androidMickey));
+            else mickey.loadGraphic(mickeyPath);
             mickey.screenCenter();
             add(mickey);
         }
