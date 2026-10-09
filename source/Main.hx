@@ -18,7 +18,14 @@ import openfl.events.Event;
 import openfl.events.UncaughtErrorEvent;
 import states.menus.*;
 
+// Android reference APK uses native Lime touch handling; its Android binaries
+// cannot run on iOS. Apply SDL touch/mouse compatibility hints at native library
+// initialization, BEFORE Lime creates the SDL application/window.
+#if ios
+@:headerCode('#include <stdlib.h>\nstatic void __attribute__((constructor)) wi_ios_touch_init() {\n  setenv("SDL_TOUCH_MOUSE_EVENTS", "0", 1);\n  setenv("SDL_MOUSE_TOUCH_EVENTS", "0", 1);\n}')
+#else
 @:headerCode('#include <stdlib.h>')
+#end
 class Main extends Sprite
 {
 	var gameWidth:Int = 1280; // Width of the game in pixels (might be less / more in actual pixels depending on your zoom).
