@@ -1,0 +1,88 @@
+name: Import Android mobile controls
+
+on:
+  workflow_dispatch:
+    inputs:
+      apk_url:
+        description: "Optional direct APK download URL (leave empty to use MediaFire page)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  import-controls:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out iOS branch
+        uses: actions/checkout@v4
+        with:
+          ref: ios/clean-baseline
+          persist-credentials: true
+
+      - name: Download reference APK
+        env:
+          APK_URL: ${{ inputs.apk_url }}
+        run: |
+          python3 - <<'PY'
+          import os, re, urllib.request, html
+          from pathlib import Path
+          page = "https://www.mediafire.com/file/c027cjvm5taq8ne/FNF+Wednesday%27s+Infidelity+Part+2+Optimizado+%28M.M%2CA.S%29.apk/file"
+          url = os.environ.get("APK_URL", "").strip()
+          if not url:
+              req = urllib.request.Request(page, headers={"User-Agent": "Mozilla/5.0"})
+              body = urllib.request.urlopen(req, timeout=40).read().decode("utf-8", "replace")
+              matches = re.findall(r'https?://download[^"\'<> ]+?\.apk(?:\?[^"\'<> ]*)?', body)
+              if not matches:
+                  matches = re.findall(r'href="(https?://[^"]+)"[^>]*id="downloadButton"', body)
+              if not matches:
+                  matches = re.findall(r'id="downloadButton"[^>]*href="(https?://[^"]+)"', body)
+              if not matches:
+                  raise SystemExit("Could not resolve MediaFire direct link. Re-run with apk_url input containing a direct APK URL.")
+              url = html.unescape(matches[0])
+          req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+          with urllib.request.urlopen(req, timeout=120) as response, open("reference.apk", "wb") as output:
+              while True:
+                  chunk = response.read(1024 * 1024)
+                  if not chunk: break
+                  output.write(chunk)
+          import zipfile
+          if not zipfile.is_zipfile("reference.apk"):
+              raise SystemExit("Download is not a valid APK/ZIP.")
+          print("Downloaded reference APK successfully")
+          PY
+
+      - name: Extract original Android control resources
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          prefix = "assets/assets/images/androidcontrols/"
+          dest = Path("assets/androidcontrols")
+          allowed = {".png", ".xml", ".txt"}
+          with zipfile.ZipFile("reference.apk") as apk:
+              names = [n for n in apk.namelist() if n.startswith(prefix) and Path(n).suffix.lower() in allowed]
+              if not names:
+                  raise SystemExit("APK has no Android mobile control resources")
+              for name in names:
+                  relative = Path(name[len(prefix):])
+                  if relative.is_absolute() or ".." in relative.parts: raise SystemExit("Unsafe APK path")
+                  target = dest / relative
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  target.write_bytes(apk.read(name))
+                  print("Imported", target)
+          PY
+
+      - name: Commit extracted assets to iOS branch
+        run: |
+          rm -f reference.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/androidcontrols
+          if git diff --cached --quiet; then
+            echo "No changes; Android controls are already up to date."
+          else
+            git commit -m "Import original mobile controls from optimized Android APK"
+            git push origin HEAD:ios/clean-baseline
+          fi
