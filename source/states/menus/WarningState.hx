@@ -177,6 +177,9 @@ class WarningState extends MusicBeatState
 			b.setFormat(null, 27, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 			b.borderSize = 3;
 			b.cameras = [camHUD];
+			// Original Android artwork already contains button symbols.
+			// Only display our text fallback if the atlas was unavailable.
+			b.visible = !Assets.exists(atlasPath);
 			add(b);
 			mobileButtons.push(b);
 		}
