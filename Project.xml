@@ -67,6 +67,8 @@
 	<assets path="assets/shared"        library="shared"        exclude="*.ogg" if="web"/>
 	<assets path="assets/shared"        library="shared"        exclude="*.mp3" unless="web"/>
 
+	<!-- Original optimized Android virtual pad, loaded only on iOS -->
+	<assets path="assets/androidcontrols" rename="assets/images/androidcontrols" if="ios" />
 	<assets path="assets/fonts" embed='true'/>
 
 	<assets path='assets/menu codes.txt' rename='MENU CODES.txt' />
