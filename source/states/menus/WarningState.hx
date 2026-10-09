@@ -57,8 +57,11 @@ class WarningState extends MusicBeatState
 
 		if (ClientPrefs.doNotShowWarnings)
 		{
+			#if ios
+			FlxG.switchState(new IOSTitleState());
+			#else
 			MusicBeatState.switchState(new TitleState());
-
+			#end
 			return;
 		}
 
