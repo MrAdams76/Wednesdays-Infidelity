@@ -49,6 +49,7 @@ class WarningState extends MusicBeatState
 	private var infoTexts:Array<FlxText> = [];
 	#if ios
 	private var mobileButtons:Array<FlxText> = [];
+	private var mobileHitboxes:Array<FlxSprite> = [];
 	#end
 
 	override function create()
@@ -157,6 +158,7 @@ class WarningState extends MusicBeatState
 			bg.alpha = 0.75;
 			bg.cameras = [camHUD];
 			add(bg);
+			mobileHitboxes.push(bg);
 			var b = new FlxText(bx, FlxG.height - 105, FlxG.width * 0.22, labels[i], 27);
 			b.setFormat(null, 27, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 			b.borderSize = 3;
@@ -349,10 +351,11 @@ class WarningState extends MusicBeatState
 			for (touch in FlxG.touches.list)
 			{
 				if (!touch.justPressed) continue;
-				var point = touch.getScreenPosition(camHUD);
-				if (point.y >= FlxG.height - 125)
+				// Android-port-inspired hitbox controls: each visible button
+				// owns its own touch region rather than dividing the screen.
+				for (index in 0...mobileHitboxes.length)
 				{
-					var index = Std.int(point.x / (FlxG.width * 0.245));
+					if (!touch.overlaps(mobileHitboxes[index], camHUD)) continue;
 					switch (index)
 					{
 						case 0: changeSelection(-1);
@@ -361,9 +364,8 @@ class WarningState extends MusicBeatState
 							curOption.setValue(!curOption.getValue());
 							curOption.change();
 							reloadCheckboxes();
-						case 3 | 4:
-							continueFromWarning();
-						}
+						case 3: continueFromWarning();
+					}
 					return;
 				}
 			}
