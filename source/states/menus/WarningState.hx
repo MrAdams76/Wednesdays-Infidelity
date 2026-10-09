@@ -399,17 +399,17 @@ class WarningState extends MusicBeatState
 		canMove = false;
 
 		#if ios
-		// iOS diagnostic: deliberately stay in WarningState after CONTINUE.
-		// This distinguishes a native touch-event abort from a crash caused by
-		// FlxG.switchState, camera teardown, or IOSTitleState.create().
-		if (mobileButtons.length > 3)
+		// Mobile-friendly startup experiment inspired by the optimized Android port:
+		// avoid costly shader and camera-shake effects during the first transition.
+		ClientPrefs.shaders = false;
+		ClientPrefs.intensiveShaders = false;
+		ClientPrefs.shake = false;
+		// Defer the state change until after the touch event has finished.
+		// Keep the original desktop transition path unchanged.
+		new FlxTimer().start(0.2, function(tmr:FlxTimer)
 		{
-			mobileButtons[3].text = "TAP OK";
-			mobileButtons[3].color = FlxColor.LIME;
-		}
-		warnText.text = "Touch received. No state switch.\nIf this screen stays open, touch works and the crash is in the transition or next state.";
-		warnText.color = FlxColor.LIME;
-		trace("IOS_DIAGNOSTIC: CONTINUE touch handled without switching state");
+			FlxG.switchState(new IOSTitleState());
+		});
 		#else
 		FlxTween.tween(camGame, {alpha: 0}, 1);
 		FlxTween.tween(camHUD, {alpha: 0}, 1);
