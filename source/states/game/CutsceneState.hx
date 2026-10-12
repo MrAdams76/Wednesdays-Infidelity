@@ -17,6 +17,7 @@ class CutsceneState extends MusicBeatState // PlayState is alreadly laggy enough
 	public var endingCutscene:Bool = false;
 
 	public var video:FlxVideo;
+	private var finished:Bool = false;
 
 	public function new(songName:String, isEnd:Bool, ?finishCallback:Void->Void)
 	{
@@ -112,14 +113,14 @@ class CutsceneState extends MusicBeatState // PlayState is alreadly laggy enough
 		var foundFile:Bool = false;
 		var fileName:String = Paths.video(videoName);
 
-		if (FileSystem.exists(fileName))
+		if (#if ios true #else FileSystem.exists(fileName) #end)
 		{
 			foundFile = true;
 		}
 
 		if (foundFile)
 		{
-			var video = new FlxVideo(fileName, skippable, focus);
+			video = new FlxVideo(fileName, skippable, focus);
 
 			video.finishCallback = function()
 			{
@@ -137,8 +138,16 @@ class CutsceneState extends MusicBeatState // PlayState is alreadly laggy enough
 		#end
 	}
 
+	override public function destroy():Void
+	{
+		if (video != null) { video.destroy(); video = null; }
+		super.destroy();
+	}
+
 	public function finish()
 	{
+		if (finished) return;
+		finished = true;
 		if (video != null)
 		{
 			video.destroy();

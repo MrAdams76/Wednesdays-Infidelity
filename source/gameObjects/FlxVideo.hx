@@ -11,7 +11,11 @@ import openfl.events.Event;
 import flixel.FlxBasic;
 import flixel.FlxG;
 import input.PlayerSettings;
+#if desktop
 import vlc.MP4Handler;
+#elseif ios
+import input.IOSVideo;
+#end
 
 class FlxVideo extends FlxBasic
 {
@@ -21,6 +25,9 @@ class FlxVideo extends FlxBasic
 	#if desktop
 	#end
 	public var skipable:Bool = false;
+	#if ios
+	private var nativeVideo:IOSVideo;
+	#end
 
 	public function new(name:String, ?skip:Bool, ?focus:Bool = true)
 	{
@@ -62,6 +69,14 @@ class FlxVideo extends FlxBasic
 			}
 		});
 		netStream.play(name);
+		#elseif ios
+		nativeVideo = new IOSVideo(focus);
+		nativeVideo.skipable = skipable;
+		nativeVideo.finishCallback = function()
+		{
+			if (finishCallback != null) finishCallback();
+		};
+		nativeVideo.playVideo(name);
 		#elseif desktop
 		var video:MP4Handler = new MP4Handler(focus);
 		video.playVideo(name);
@@ -70,6 +85,14 @@ class FlxVideo extends FlxBasic
 		video.skipable = skipable;
 		#end
 	}
+
+	#if ios
+	override public function destroy():Void
+	{
+		if (nativeVideo != null) { nativeVideo.dispose(); nativeVideo = null; }
+		super.destroy();
+	}
+	#end
 
 	#if desktop
 	function checkFile(fileName:String):String

@@ -24,15 +24,15 @@ class ChromaticAberrationEffect extends Effect
 	public function new(offset:Float = 0.00)
 	{
 		shader = new ChromaticAberrationShader();
-		shader.rOffset.value = [offset];
-		shader.gOffset.value = [0.0];
-		shader.bOffset.value = [-offset];
+		shader.rOffset.value = [offset, 0.0];
+		shader.gOffset.value = [0.0, 0.0];
+		shader.bOffset.value = [-offset, 0.0];
 	}
 
 	public function setChrome(chromeOffset:Float):Void
 	{
 		shader.rOffset.value = [chromeOffset, 0.0];
-		shader.gOffset.value = [0.0];
+		shader.gOffset.value = [0.0, 0.0];
 		shader.bOffset.value = [-chromeOffset, 0.0];
 	}
 }
@@ -83,7 +83,7 @@ class DistortionEffect extends Effect
 		shader.timeMulti.value = [1.];
 		shader.effectMulti.value = [1.];
 
-		shader.iResolution.value = [Lib.current.stage.stageWidth, Lib.current.stage.stageHeight];
+		shader.iResolution.value = [Lib.current.stage.stageWidth, Lib.current.stage.stageHeight, 1.0];
 		if (pushUpdate)
 			PlayState.instance.shaderUpdates.push(update);
 	}
@@ -91,7 +91,7 @@ class DistortionEffect extends Effect
 	public function update(elapsed:Float)
 	{
 		shader.iTime.value[0] += elapsed;
-		shader.iResolution.value = [Lib.current.stage.stageWidth, Lib.current.stage.stageHeight];
+		shader.iResolution.value = [Lib.current.stage.stageWidth, Lib.current.stage.stageHeight, 1.0];
 	}
 
 	public function setGlitchModifier(modifier:Float)
@@ -175,7 +175,7 @@ class DistortionShader extends FlxShader
 			vec3 g;
 			g.x  = a0.x  * x0.x  + h.x  * x0.y;
 			g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-			return (fullglitch * 130) * dot(m, g);
+			return (fullglitch * 130.0) * dot(m, g);
 		}
     
         float onOff(float a, float b, float c)
@@ -211,7 +211,7 @@ class DistortionShader extends FlxShader
 
             float window = 1./(1.+20.*(look.y-mod(iTime/4.,1.))*(look.y-mod(iTime/4.,1.)));
 			if (moveScreenX) {
-				look.x = look.x + (sin(look.y*10. + iTime)/50.*onOff((4. * timeMulti),(4. * timeMulti),(.3 * timeMulti))*(1.+cos(iTime*80.))*window)*(glitchModifier*2);
+				look.x = look.x + (sin(look.y*10. + iTime)/50.*onOff((4. * timeMulti),(4. * timeMulti),(.3 * timeMulti))*(1.+cos(iTime*80.))*window)*(glitchModifier*2.0);
 			}
           
 
@@ -284,14 +284,14 @@ class VHSEffect extends Effect
 		shader.noisePercent.value = [0.0];
 		shader.range.value = [0.05];
 		shader.offsetIntensity.value = [0.02];
-		shader.iResolution.value = [Lib.current.stage.stageWidth, Lib.current.stage.stageHeight];
+		shader.iResolution.value = [Lib.current.stage.stageWidth, Lib.current.stage.stageHeight, 1.0];
 		PlayState.instance.shaderUpdates.push(update);
 	}
 
 	public function update(elapsed:Float)
 	{
 		shader.iTime.value[0] += elapsed;
-		shader.iResolution.value = [Lib.current.stage.stageWidth, Lib.current.stage.stageHeight];
+		shader.iResolution.value = [Lib.current.stage.stageWidth, Lib.current.stage.stageHeight, 1.0];
 	}
 
 	public function setNoise(amount:Float)
@@ -423,7 +423,7 @@ class VHSShader extends FlxShader // i HATE shaders xd -lunar https://www.shader
 			vec2 look = vec2(xpos, uv.y);
 
 			float window = 1./(2.+20.*(look.y-mod(iTime ,1.))*(look.y-mod(iTime ,1.)));
-			float vShift = 0.2*onOff(2.,3.,.9) * (sin(iTime)*sin(iTime*200.) + (0.2 + 0.1*sin(iTime*200.)*cos(iTime/10)));
+			float vShift = 0.2*onOff(2.,3.,.9) * (sin(iTime)*sin(iTime*200.) + (0.2 + 0.1*sin(iTime*200.)*cos(iTime/10.0)));
 			look.y = mod(look.y + vShift, 1.);
 			vec4 video = vec4(flixel_texture2D(bitmap,look));
 			return video;
@@ -463,9 +463,9 @@ class VHSShader extends FlxShader // i HATE shaders xd -lunar https://www.shader
 			vec4 video = getVideo(uv);
 			float x =  0.;
 
-			video.r = getVideo(vec2(x+uv.x+(0.001/1),uv.y+(0.001/2)));
-          	video.g = getVideo(vec2(x+uv.x+(0.000/1),uv.y-(0.002/2)));
-          	video.b = getVideo(vec2(x+uv.x-(0.002/1),uv.y+(0.000/2)));
+			video.r = getVideo(vec2(x+uv.x+(0.001/1.0),uv.y+(0.001/2.0))).r;
+			video.g = getVideo(vec2(x+uv.x+(0.000/1.0),uv.y-(0.002/2.0))).g;
+			video.b = getVideo(vec2(x+uv.x-(0.002/1.0),uv.y+(0.000/2.0))).b;
 			
 			float vigAmt = 3.+.3*sin(iTime + 5.*cos(iTime*5.));
 			float vignette = (1.-vigAmt*(uv.y-.5)*(uv.y-.5))*(1.-vigAmt*(uv.x-.5)*(uv.x-.5));
@@ -530,8 +530,14 @@ class BloomShader extends FlxShader // BLOOM SHADER BY BBPANZU
 
 		vec4 Color = texture2D( bitmap, uv);
 		
-		for(float d=0.0; d<Pi; d+=Pi/Directions){
-			for(float i=1.0/Quality; i<=1.0; i+=1.0/Quality){
+		// GLES requires constant loop bounds. Keep the original sampling
+		// angles and radii, with uniform-controlled early exits.
+		for(int directionIndex=0; directionIndex<64; directionIndex++){
+			if(float(directionIndex)>=Directions) break;
+			float d = float(directionIndex)*Pi/Directions;
+			for(int qualityIndex=1; qualityIndex<=64; qualityIndex++){
+				if(float(qualityIndex)>Quality) break;
+				float i = float(qualityIndex)/Quality;
 
 				float ex = (cos(d)*Size*i)/openfl_TextureSize.x;
 				float why = (sin(d)*Size*i)/openfl_TextureSize.y;

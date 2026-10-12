@@ -14,7 +14,7 @@
 
 	<!-- ____________________________ Window Settings ___________________________ -->
 
-	<window width="1280" height="720" fps="" background="#000000" hardware="true" vsync="false" />
+	<window width="1280" height="720" fps="60" background="#000000" hardware="true" vsync="false" />
 
 	<window orientation="landscape" fullscreen="false" resizable="true" vsync="false"/>
 
@@ -36,8 +36,9 @@
 	<set name="BUILD_DIR" value="export/32bit" if="32bits" />
 
 	<classpath name="source" />
+	<classpath name="desktop-source" unless="ios" />
 	
-	<define name="VIDEOS_ALLOWED" if="web || windows" unless="32bits"/>
+	<define name="VIDEOS_ALLOWED" if="web || windows || ios" unless="32bits"/>
 
 	<assets path="assets/preload" rename="assets" exclude="*.ogg" if="web"/>
 	<assets path="assets/preload" rename="assets" exclude="*.mp3"  unless="web"/>
@@ -50,7 +51,8 @@
 	<define name="PRELOAD_ALL" unless="web || ios" />
 	<define name="NO_PRELOAD_ALL" unless="PRELOAD_ALL"/>
 	
-	<library name="videos"        preload="true" />
+	<library name="videos"        preload="true" unless="ios" />
+	<library name="videos"        preload="false" if="ios" />
 	<section if="PRELOAD_ALL">
 		<library name="songs"         preload="true" />
 		<library name="shared"        preload="true" />
@@ -97,6 +99,8 @@
 	<error value="Targets besides desktop are not supported" unless="desktop || ios" />
 
 	<haxedef name="no-deprecation-warnings" />
+	<app version="0.5.2" if="ios" />
+	<window orientation="landscape" fullscreen="true" resizable="false" if="ios" />
 
 	<!-- _________________________________ Custom _______________________________ -->
 

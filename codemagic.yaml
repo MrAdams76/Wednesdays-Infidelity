@@ -56,52 +56,15 @@ workflows:
           haxelib set hxcpp "$HXCPP_VERSION"
           haxelib set flxanimate 1.2.0
           haxelib list
-      - name: Disable desktop-only VLC on iOS
+      - name: Verify reconstruction inputs
         script: |
           set -euo pipefail
           cd "$CM_BUILD_DIR"
-          python3 - <<'PY'
-          from pathlib import Path
-          import shutil
-          original = Path("source/vlc")
-          if original.exists():
-              shutil.move(str(original), "vlc-desktop-backup")
-          original.mkdir(parents=True, exist_ok=True)
-          original.joinpath("MP4Handler.hx").write_text("""
-          package vlc;
-          import openfl.display.Sprite;
-          class MP4Handler extends Sprite {
-            public var readyCallback:Void->Void;
-            public var finishCallback:Void->Void;
-            public var skipable:Bool = false;
-            public var focus:Bool = true;
-            public var isPlaying:Bool = false;
-            public var volume:Float = 1;
-            public var repeat:Int = 0;
-            public function new(daFocus:Null<Bool> = true, width:Float = 320, height:Float = 240, autoScale:Bool = true) {
-              super();
-              if (daFocus != null) focus = daFocus;
-            }
-            public function playVideo(path:String, ?repeat:Bool = false, pauseMusic:Bool = false):Void {
-              isPlaying = true;
-              haxe.Timer.delay(function() {
-                if (!isPlaying) return;
-                if (readyCallback != null) readyCallback();
-                finishVideo();
-              }, 1);
-            }
-            public function finishVideo():Void {
-              if (!isPlaying) return;
-              isPlaying = false;
-              if (finishCallback != null) finishCallback();
-            }
-            public function pause():Void {}
-            public function resume():Void {}
-            public function stop():Void { finishVideo(); }
-            public function dispose():Void { isPlaying = false; }
-          }
-          """.lstrip())
-          PY
+          python3 tools/verify_ios_content.py
+          haxe -D touch_actions_test -cp source -cp tools -main TouchActionsTest --interp
+          xcrun --sdk iphoneos clang++ -fsyntax-only -x objective-c++ -std=c++11 -arch arm64 \
+            -isysroot "$(xcrun --sdk iphoneos --show-sdk-path)" \
+            -miphoneos-version-min=12.0 native/ios/WIVideo.mm
       - name: Generate iOS Xcode project
         script: |
           set -euo pipefail

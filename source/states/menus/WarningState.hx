@@ -61,11 +61,7 @@ class WarningState extends MusicBeatState
 
 		if (ClientPrefs.doNotShowWarnings)
 		{
-			#if ios
-			FlxG.switchState(new IOSTitleState());
-			#else
 			MusicBeatState.switchState(new TitleState());
-			#end
 			return;
 		}
 
@@ -417,24 +413,6 @@ class WarningState extends MusicBeatState
 		if (!canMove || !canPressSpace) return;
 		canMove = false;
 
-		#if ios
-		// Mobile-friendly startup experiment inspired by the optimized Android port:
-		// avoid costly shader and camera-shake effects during the first transition.
-		ClientPrefs.shaders = false;
-		ClientPrefs.intensiveShaders = false;
-		ClientPrefs.shake = false;
-		// Touch-crash isolation build: do not switch states yet.
-		// If this screen stays alive after CONTINUE, touch delivery works
-		// and the crash is likely in the title-state transition/loading.
-		// If it still exits, investigate native Lime/SDL touch dispatch.
-		var diagnostic = new FlxText(0, FlxG.height * 0.45, FlxG.width,
-			"TOUCH RECEIVED - APP STILL RUNNING", 34);
-		diagnostic.setFormat(null, 34, FlxColor.LIME, CENTER,
-			FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-		diagnostic.cameras = [camHUD];
-		add(diagnostic);
-		trace("iOS touch diagnostic: CONTINUE processed without state transition");
-		#else
 		FlxTween.tween(camGame, {alpha: 0}, 1);
 		FlxTween.tween(camHUD, {alpha: 0}, 1);
 
@@ -448,6 +426,5 @@ class WarningState extends MusicBeatState
 
 			MusicBeatState.switchState(new UnfinishedState());
 		});
-		#end
 	}
 }

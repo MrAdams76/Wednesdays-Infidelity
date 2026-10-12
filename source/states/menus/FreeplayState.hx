@@ -373,7 +373,7 @@ class FreeplayState extends MusicBeatState
 			var upP = controls.UI_UP_P;
 			var downP = controls.UI_DOWN_P;
 			var accepted = controls.ACCEPT;
-			var space = FlxG.keys.justPressed.SPACE;
+			var space = FlxG.keys.justPressed.SPACE #if ios || input.MobileInput.check("preview") #end;
 			var ctrl = FlxG.keys.justPressed.CONTROL;
 
 			var shiftMult:Int = 1;
@@ -448,6 +448,8 @@ class FreeplayState extends MusicBeatState
 					vocals.looped = true;
 					vocals.volume = 0.7;
 					instPlaying = curSelected;
+					#elseif ios
+					previewMobileSong();
 					#end
 				}
 			}
@@ -701,6 +703,39 @@ class FreeplayState extends MusicBeatState
 		diffText.x = Std.int(scoreBG.x + (scoreBG.width / 2));
 		diffText.x -= diffText.width / 2;
 	}
+
+	#if ios
+	private var previewRequest:Int = 0;
+	private function previewMobileSong():Void
+	{
+		var index = curSelected;
+		var request = ++previewRequest;
+		var name = songs[index].songName;
+		var chart = Song.loadFromJson(Highscore.formatSong(name.toLowerCase(), curDifficulty), name.toLowerCase());
+		var startPreview = function(instrument:openfl.media.Sound, voice:openfl.media.Sound)
+		{
+			if (FlxG.state != this || selectedSomethin || curSelected != index || request != previewRequest) return;
+			destroyFreeplayVocals();
+			vocals = voice != null ? new FlxSound().loadEmbedded(voice) : new FlxSound();
+			FlxG.sound.list.add(vocals);
+			FlxG.sound.playMusic(instrument, 0.7);
+			vocals.play();
+			vocals.persist = true;
+			vocals.looped = true;
+			vocals.volume = 0.7;
+			instPlaying = index;
+		};
+		openfl.utils.Assets.loadLibrary("songs").onComplete(function(_)
+		{
+			openfl.utils.Assets.loadSound(Paths.songAsset(name, "Inst")).onComplete(function(instrument)
+			{
+				if (chart.needsVoices)
+					openfl.utils.Assets.loadSound(Paths.songAsset(name, "Voices")).onComplete(function(voice) startPreview(instrument, voice));
+				else startPreview(instrument, null);
+			});
+		});
+	}
+	#end
 
 	public override function destroy()
 	{

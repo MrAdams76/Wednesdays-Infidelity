@@ -98,14 +98,14 @@ class Song
 
 		if (rawJson == null)
 		{
-			#if sys
+			#if (sys && !ios)
 			rawJson = File.getContent(Paths.json(formattedFolder + '/' + formattedSong)).trim();
 			#else
 			rawJson = Assets.getText(Paths.json(formattedFolder + '/' + formattedSong)).trim();
 			#end
 		}
 
-		while (!rawJson.endsWith("}"))
+		while (rawJson.length > 0 && !rawJson.endsWith("}"))
 		{
 			rawJson = rawJson.substr(0, rawJson.length - 1);
 			// LOL GOING THROUGH THE BULLSHIT TO CLEAN IDK WHATS STRANGE

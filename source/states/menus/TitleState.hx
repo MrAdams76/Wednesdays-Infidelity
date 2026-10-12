@@ -88,11 +88,6 @@ class TitleState extends MusicBeatState
 		curWacky = FlxG.random.getObject(getIntroTextShit());
 		if (curWacky == null || curWacky.length < 2) curWacky = ['Wednesday', 'Infidelity'];
 
-		#if ios
-		var tapButton = new FlxText(0, FlxG.height - 110, FlxG.width, '[ TAP TO START ]', 40);
-		tapButton.setFormat(null, 40, FlxColor.WHITE, CENTER);
-		add(tapButton);
-		#end
 
 		new FlxTimer().start(1, function(tmr:FlxTimer)
 		{
@@ -123,10 +118,6 @@ class TitleState extends MusicBeatState
 		Conductor.changeBPM(102);
 		persistentUpdate = true;
 
-		#if ios
-		// Avoid GPU shader startup crashes until iOS shaders are validated.
-		ClientPrefs.shaders = false;
-		#end
 		if (ClientPrefs.shaders)
 		{
 			if (ClientPrefs.intensiveShaders)
@@ -157,7 +148,7 @@ class TitleState extends MusicBeatState
 			spiralbg.screenCenter(X);
 			spiralbg.scrollFactor.set(0, 0);
 			spiralbg.shader = spiral;
-			spiral.iResolution.value = [spiralbg.width, spiralbg.height];
+			spiral.iResolution.value = [spiralbg.width, spiralbg.height, 1.0];
 			add(spiralbg);
 		}
 		else
@@ -175,7 +166,8 @@ class TitleState extends MusicBeatState
 		mickey.screenCenter(X);
 		add(mickey);
 
-		titleText = new FlxSprite(-400, -100).loadGraphic(Paths.image('titleEnter'));
+		titleText = new FlxSprite(-400, -100);
+		titleText.frames = Paths.getSparrowAtlas('titleEnter');
 		titleText.animation.addByPrefix('idle', "Press Enter to Begin", 24);
 		titleText.animation.addByPrefix('press', "ENTER PRESSED", 24);
 		titleText.antialiasing = ClientPrefs.globalAntialiasing;
@@ -184,7 +176,8 @@ class TitleState extends MusicBeatState
 		titleText.updateHitbox();
 		add(titleText);
 
-		titleTextx = new FlxSprite(-200, -50).loadGraphic(Paths.image('titleEnter'));
+		titleTextx = new FlxSprite(-200, -50);
+		titleTextx.frames = Paths.getSparrowAtlas('titleEnter');
 		titleTextx.animation.addByPrefix('idle', "Press Enter to Begin", 24);
 		titleTextx.animation.addByPrefix('press', "ENTER PRESSED", 24);
 		titleTextx.antialiasing = ClientPrefs.globalAntialiasing;
@@ -193,7 +186,8 @@ class TitleState extends MusicBeatState
 		titleTextx.updateHitbox();
 		add(titleTextx);
 
-		titleTextxs = new FlxSprite(200, 0).loadGraphic(Paths.image('titleEnter'));
+		titleTextxs = new FlxSprite(200, 0);
+		titleTextxs.frames = Paths.getSparrowAtlas('titleEnter');
 		titleTextxs.animation.addByPrefix('idle', "Press Enter to Begin", 24);
 		titleTextxs.animation.addByPrefix('press', "ENTER PRESSED", 24);
 		titleTextxs.antialiasing = ClientPrefs.globalAntialiasing;
@@ -366,7 +360,7 @@ class TitleState extends MusicBeatState
 		if (spiral != null)
 		{
 			spiral.iTime.value[0] += elapsed;
-			spiral.iResolution.value = [spiralbg.width, spiralbg.height];
+			spiral.iResolution.value = [spiralbg.width, spiralbg.height, 1.0];
 		}
 
 		super.update(elapsed);

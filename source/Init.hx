@@ -69,6 +69,10 @@ class Init extends FlxState
 
 		Progression.load();
 
+		#if ios
+		FlxG.plugins.add(new input.MobileInput());
+		#end
+
 		#if !ios
 		Paths.excludeAsset('assets/preload/images/kevin_normal.png');
 		CoolUtil.precacheImage('kevin_normal', 'preload');
@@ -93,6 +97,16 @@ class Init extends FlxState
 		CoolUtil.precacheImage('NOTE_assets', 'shared');
 		#end
 
+		#if ios
+		openfl.utils.Assets.loadLibrary("shared").onComplete(function(_)
+		{
+			FlxG.switchState(Type.createInstance(SpecsDetector, []));
+		}).onError(function(error)
+		{
+			throw 'Unable to load bundled shared assets: $error';
+		});
+		#else
 		FlxG.switchState(Type.createInstance(SpecsDetector, []));
+		#end
 	}
 }

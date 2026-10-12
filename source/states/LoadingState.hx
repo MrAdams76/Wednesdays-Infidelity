@@ -144,12 +144,12 @@ class LoadingState extends MusicBeatState
 
 	static function getSongPath()
 	{
-		return Paths.inst(PlayState.SONG.song);
+		return Paths.songAsset(PlayState.SONG.song, 'Inst');
 	}
 
 	static function getVocalPath()
 	{
-		return Paths.voices(PlayState.SONG.song);
+		return Paths.songAsset(PlayState.SONG.song, 'Voices');
 	}
 
 	inline static public function loadAndSwitchState(target:FlxState, stopMusic = false)

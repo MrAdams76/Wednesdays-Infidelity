@@ -205,17 +205,22 @@ class Paths
 		return file;
 	}
 
+	public static function songAsset(song:String, stem:String):String
+	{
+		return 'songs:assets/songs/${formatToSongPath(song)}/$stem.$SOUND_EXT';
+	}
+
 	inline static public function voices(song:String):Any
 	{
 		var songKey:String = '${song.toLowerCase().replace(' ', '-')}/Voices';
-		var voices = returnSound('songs', songKey);
+		var voices = #if ios OpenFlAssets.getSound(songAsset(song, 'Voices')) #else returnSound('songs', songKey) #end;
 		return voices;
 	}
 
 	inline static public function inst(song:String):Any
 	{
 		var songKey:String = '${song.toLowerCase().replace(' ', '-')}/Inst';
-		var inst = returnSound('songs', songKey);
+		var inst = #if ios OpenFlAssets.getSound(songAsset(song, 'Inst')) #else returnSound('songs', songKey) #end;
 		return inst;
 	}
 

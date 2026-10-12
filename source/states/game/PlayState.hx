@@ -1,5 +1,9 @@
 package states.game;
 
+#if ios
+import openfl.utils.Assets as OpenFlAssets;
+#end
+
 import data.*;
 import data.ClientPrefs;
 import data.Highscore;
@@ -1895,7 +1899,7 @@ class PlayState extends MusicBeatState
 
 		var songName:String = Paths.formatToSongPath(SONG.song);
 		var file:String = Paths.json(songName + '/events');
-		#if sys
+		#if (sys && !ios)
 		if (FileSystem.exists(file))
 		{
 		#else
@@ -2354,7 +2358,7 @@ class PlayState extends MusicBeatState
 			}
 		}
 
-		if (doingDodge && canDodge && FlxG.keys.anyJustPressed(dodgeKeys) && !_onCoolDown && !cpuControlled && !dodging && !paused)
+		if (doingDodge && canDodge && (FlxG.keys.anyJustPressed(dodgeKeys) #if ios || input.MobileInput.check("dodge-press") #end) && !_onCoolDown && !cpuControlled && !dodging && !paused)
 		{
 			_onCoolDown = true;
 			dodging = true;
@@ -3974,7 +3978,12 @@ class PlayState extends MusicBeatState
 		var key:Int = getKeyFromEvent(eventKey);
 		// trace('Pressed: ' + eventKey);
 
-		if (!cpuControlled && !paused && key > -1 && (FlxG.keys.checkStatus(eventKey, JUST_PRESSED) || ClientPrefs.controllerMode))
+		if (FlxG.keys.checkStatus(eventKey, JUST_PRESSED) || ClientPrefs.controllerMode) pressLane(key);
+	}
+
+	private function pressLane(key:Int):Void
+	{
+		if (!cpuControlled && !paused && key >= 0 && key < 4 && startedCountdown && !inCutscene)
 		{
 			if (!boyfriend.stunned && generatedMusic && !endingSong)
 			{
@@ -4051,7 +4060,12 @@ class PlayState extends MusicBeatState
 	{
 		var eventKey:FlxKey = event.keyCode;
 		var key:Int = getKeyFromEvent(eventKey);
-		if (!cpuControlled && !paused && key > -1)
+		releaseLane(key);
+	}
+
+	private function releaseLane(key:Int):Void
+	{
+		if (!cpuControlled && !paused && key >= 0 && key < 4)
 		{
 			var spr:StrumNote = playerStrums.members[key];
 			if (spr != null)
@@ -4090,6 +4104,14 @@ class PlayState extends MusicBeatState
 		var down = controls.NOTE_DOWN;
 		var left = controls.NOTE_LEFT;
 		var controlHoldArray:Array<Bool> = [left, down, up, right];
+		#if ios
+		var mobileLanes = ["note_left", "note_down", "note_up", "note_right"];
+		for (i in 0...4)
+		{
+			if (input.MobileInput.check(mobileLanes[i] + "-press")) pressLane(i);
+			if (input.MobileInput.check(mobileLanes[i] + "-release")) releaseLane(i);
+		}
+		#end
 
 		// TO DO: Find a better way to handle controller inputs, this should work for now
 		if (ClientPrefs.controllerMode)
@@ -4104,7 +4126,7 @@ class PlayState extends MusicBeatState
 			{
 				for (i in 0...controlArray.length)
 				{
-					if (controlArray[i])
+					if (controlArray[i] #if ios && !input.MobileInput.check(mobileLanes[i] + "-press") #end)
 						onKeyPress(new KeyboardEvent(KeyboardEvent.KEY_DOWN, true, true, -1, keysArray[i][0]));
 				}
 			}
@@ -4148,7 +4170,7 @@ class PlayState extends MusicBeatState
 			{
 				for (i in 0...controlArray.length)
 				{
-					if (controlArray[i])
+					if (controlArray[i] #if ios && !input.MobileInput.check(mobileLanes[i] + "-release") #end)
 						onKeyRelease(new KeyboardEvent(KeyboardEvent.KEY_UP, true, true, -1, keysArray[i][0]));
 				}
 			}
@@ -5272,8 +5294,12 @@ class PlayState extends MusicBeatState
 
 		var hxdata:String = "";
 
+		#if ios
+		if (OpenFlAssets.exists(path)) hxdata = OpenFlAssets.getText(path);
+		#else
 		if (FileSystem.exists(path))
 			hxdata = File.getContent(path);
+		#end
 
 		if (hxdata != "")
 		{
