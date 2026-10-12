@@ -13,8 +13,9 @@ class NativeVideoBuild
         var pos = Context.currentPos();
         var type = Context.getLocalClass().get();
         type.meta.add(":include", [macro $v{root + "/WIVideo.h"}], pos);
-        var xml = '<files id="haxe"><file name="${root}/WIVideo.mm" /></files>'
-            + '<target id="haxe"><lib name="-framework AVFoundation" /><lib name="-framework UIKit" /><lib name="-framework AVKit" /></target>';
+        // hxcpp creates a static archive on iOS. Apple frameworks must be
+        // linked by the Xcode app target, not passed to libtool here.
+        var xml = '<files id="haxe"><file name="${root}/WIVideo.mm" /></files>';
         type.meta.add(":buildXml", [macro $v{xml}], pos);
         return Context.getBuildFields();
     }

@@ -37,6 +37,8 @@
 
 	<classpath name="source" />
 	<classpath name="desktop-source" unless="ios" />
+	<!-- Link native cinematic playback at the final Xcode application stage. -->
+	<dependency name="AVFoundation.framework" if="ios" />
 	
 	<define name="VIDEOS_ALLOWED" if="web || windows || ios" unless="32bits"/>
 
