@@ -3,6 +3,13 @@ workflows:
     name: Wednesday Infidelity - Original Source iOS
     instance_type: mac_mini_m2
     max_build_duration: 120
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: ios/clean-baseline
+          include: true
+          source: true
     environment:
       xcode: 16.4
       vars:
