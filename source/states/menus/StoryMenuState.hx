@@ -84,6 +84,14 @@ class StoryMenuState extends MusicBeatState
 
 		PlayState.isStoryMode = true;
 		WeekData.reloadWeekFiles(true);
+		#if ios
+		if (WeekData.weeksList.length == 0)
+		{
+			trace('iOS Story Mode: no bundled week definitions were loaded');
+			MusicBeatState.switchState(new MainMenuState());
+			return;
+		}
+		#end
 		if (curWeek >= WeekData.weeksList.length)
 			curWeek = 0;
 		persistentUpdate = persistentDraw = true;
@@ -130,6 +138,13 @@ class StoryMenuState extends MusicBeatState
 			}
 		}
 
+		if (loadedWeeks.length == 0)
+		{
+			trace('Story Mode: all available weeks are hidden or invalid');
+			MusicBeatState.switchState(new MainMenuState());
+			return;
+		}
+		if (curWeek >= loadedWeeks.length) curWeek = 0;
 		WeekData.setDirectoryFromWeek(loadedWeeks[0]);
 
 		CoolUtil.difficulties = CoolUtil.defaultDifficulties.copy();
