@@ -149,33 +149,28 @@ class WarningState extends MusicBeatState
 	#if ios
 	private function addMobileButtons():Void
 	{
-		var labels = ['UP', 'DOWN', 'SELECT', 'CONTINUE'];
+		// Dedicated compact warning controls. Do not crop the virtualpad atlas:
+		// its cell layout differs from the assumed 396x135 frames and showed
+		// multiple arrows/A/B buttons across the bottom of the screen.
+		var labels = ['UP', 'DOWN', 'TOGGLE', 'CONTINUE'];
+		var gap:Float = 14;
+		var w:Float = Math.min(180, (FlxG.width - 80 - gap * 3) / 4);
+		var total:Float = 4 * w + 3 * gap;
+		var x0:Float = (FlxG.width - total) / 2;
+		var y:Float = FlxG.height - 76;
 		for (i in 0...labels.length)
 		{
-			var bx:Float = FlxG.width * (0.03 + i * 0.245);
-			var bg = new FlxSprite(bx, FlxG.height - 120);
-			// Reuse MarioMaster's original Android virtual-pad atlas on iOS.
-			// Atlas is 4 columns of 396x135 cells; UP=2, DOWN=1, A=4, B=5.
-			var atlasPath = "assets/images/androidcontrols/virtualpad.png";
-			if (Assets.exists(atlasPath))
-			{
-				bg.loadGraphic(Assets.getBitmapData(atlasPath), true, 396, 135);
-				bg.animation.frameIndex = [2, 1, 4, 5][i];
-				bg.setGraphicSize(Std.int(FlxG.width * 0.22), 90);
-				bg.updateHitbox();
-			}
-			else bg.makeGraphic(Std.int(FlxG.width * 0.22), 90, FlxColor.BLACK);
-			bg.alpha = 0.75;
+			var bx:Float = x0 + i * (w + gap);
+			var bg = new FlxSprite(bx, y).makeGraphic(Std.int(w), 56, FlxColor.fromRGB(36, 36, 36));
+			bg.alpha = 0.85;
+			bg.scrollFactor.set();
 			bg.cameras = [camHUD];
 			add(bg);
 			mobileHitboxes.push(bg);
-			var b = new FlxText(bx, FlxG.height - 105, FlxG.width * 0.22, labels[i], 27);
-			b.setFormat(null, 27, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-			b.borderSize = 3;
+			var b = new FlxText(bx, y + 13, w, labels[i], 21);
+			b.setFormat(null, 21, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			b.scrollFactor.set();
 			b.cameras = [camHUD];
-			// Original Android artwork already contains button symbols.
-			// Only display our text fallback if the atlas was unavailable.
-			b.visible = !Assets.exists(atlasPath);
 			add(b);
 			mobileButtons.push(b);
 		}
@@ -211,9 +206,9 @@ class WarningState extends MusicBeatState
 
 		infoTexts.push(text);
 
-		var text:FlxText = new FlxText(560 + 700, 650, 700, "", 21);
+		var text:FlxText = new FlxText(560 + 700, 590, 700, "", 21);
 		text.setFormat("VCR OSD Mono", 30, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-		text.applyMarkup("Tap the bottom of the screen to continue.", [new FlxTextFormatMarkerPair(new FlxTextFormat(FlxColor.YELLOW), "$")]);
+		text.applyMarkup("Use CONTINUE below when ready.", [new FlxTextFormatMarkerPair(new FlxTextFormat(FlxColor.YELLOW), "$")]);
 		text.cameras = [camHUD];
 		add(text);
 
