@@ -102,6 +102,22 @@ class WeekData
 		var originalLength:Int = directories.length;
 
 		var sexList:Array<String> = CoolUtil.coolTextFile(Paths.getPreloadPath('weeks/weekList.txt'));
+		#if ios
+		// iOS app resources can be bundled as OpenFL assets instead of files.
+		// Do not rely on FileSystem.readDirectory() inside the app bundle.
+		if (sexList.length == 0)
+		{
+			for (assetPath in ['assets/weeks/weekList.txt', 'weeks/weekList.txt'])
+			{
+				if (OpenFlAssets.exists(assetPath))
+				{
+					sexList = [for (name in OpenFlAssets.getText(assetPath).split('\\n')) name.trim()];
+					sexList = sexList.filter(function(name) return name.length > 0);
+					break;
+				}
+			}
+		}
+		#end
 		for (i in 0...sexList.length)
 		{
 			for (j in 0...directories.length)
@@ -127,6 +143,7 @@ class WeekData
 			}
 		}
 
+		#if !ios
 		for (i in 0...directories.length)
 		{
 			var directory:String = directories[i] + 'weeks/';
@@ -152,6 +169,7 @@ class WeekData
 				}
 			}
 		}
+		#end
 	}
 
 	private static function addWeek(weekToCheck:String, path:String, directory:String, i:Int, originalLength:Int)
@@ -175,9 +193,13 @@ class WeekData
 	{
 		var rawJson:String = null;
 
-		if (OpenFlAssets.exists(path))
+		for (candidate in [path, 'assets/' + path, 'assets/weeks/' + haxe.io.Path.withoutDirectory(path)])
 		{
-			rawJson = Assets.getText(path);
+			if (OpenFlAssets.exists(candidate))
+			{
+				rawJson = OpenFlAssets.getText(candidate);
+				break;
+			}
 		}
 
 		if (rawJson != null && rawJson.length > 0)
