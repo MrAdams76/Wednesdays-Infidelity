@@ -235,12 +235,22 @@ class MainMenuState extends MusicBeatState
 			menuItem.animation.addByPrefix('idle', optionShit[i] + " basic", 24);
 			menuItem.animation.addByPrefix('selected', optionShit[i] + " white", 24);
 			menuItem.animation.play('idle');
+			#if ios
+			// Keep every original animated menu atlas visible in the landscape viewport.
+			// The PC camera-follow/parallax layout can crop the entries on iPhone.
+			menuItem.scrollFactor.set(0, 0);
+			menuItem.x = (FlxG.width - menuItem.width) * 0.5;
+			menuItem.y = FlxG.height * 0.19 + i * Math.min(95, FlxG.height * 0.125);
+			#end
 			menuItem.ID = i;
 			menuItems.add(menuItem);
 			var scr:Float = (optionShit.length - 2) * 0.135;
 			if (optionShit.length < 4)
 				scr = 0;
 			menuItem.scrollFactor.set(0, scr);
+			#if ios
+			menuItem.scrollFactor.set(0, 0);
+			#end
 			menuItem.antialiasing = true;
 
 			if (optionShit[i] == 'freeplay' && !Progression.beatMainWeek)
@@ -339,7 +349,7 @@ class MainMenuState extends MusicBeatState
 						}
 						else
 						{
-							FlxTween.tween(FlxG.camera, {zoom: 2.1}, 2, {ease: FlxEase.expoInOut});
+							FlxTween.tween(FlxG.camera, {zoom: #if ios 1.0 #else 2.1 #end}, 2, {ease: FlxEase.expoInOut});
 							if (ClientPrefs.shake)
 								FlxG.camera.shake(0.008, 0.08);
 
@@ -468,6 +478,9 @@ class MainMenuState extends MusicBeatState
 				}
 				// FlxG.camera.flash(FlxColor.BLACK, 0.2);
 				camFollow.setPosition(spr.getGraphicMidpoint().x, spr.getGraphicMidpoint().y + (20 * curSelected));
+				#if ios
+				camFollow.setPosition(FlxG.width / 2, FlxG.height / 2);
+				#end
 				spr.offset.x = 0.15 * (spr.frameWidth / 2 + 180);
 				spr.offset.y = 0.15 * spr.frameHeight;
 				FlxG.log.add(spr.frameWidth);
