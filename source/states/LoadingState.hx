@@ -7,6 +7,8 @@ import flixel.FlxState;
 import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.math.FlxMath;
 import flixel.util.FlxTimer;
+import flixel.text.FlxText;
+import flixel.util.FlxColor;
 import haxe.io.Path;
 import lime.app.Future;
 import lime.app.Promise;
@@ -30,6 +32,9 @@ class LoadingState extends MusicBeatState
 	var directory:String;
 	var callbacks:MultiCallback;
 	var targetShit:Float = 0;
+	var loadFailed:Bool = false;
+	var leaving:Bool = false;
+	var loadingActive:Bool = true;
 
 	function new(target:FlxState, stopMusic:Bool, directory:String)
 	{
@@ -61,6 +66,7 @@ class LoadingState extends MusicBeatState
 
 		initSongsManifest().onComplete(function(lib)
 		{
+			if (!loadingActive || loadFailed) return;
 			callbacks = new MultiCallback(onLoad);
 			var introComplete = callbacks.add("introComplete");
 			if (PlayState.SONG != null)
@@ -78,7 +84,18 @@ class LoadingState extends MusicBeatState
 			var fadeTime = 0.5;
 			FlxG.camera.fade(FlxG.camera.bgColor, fadeTime, true);
 			new FlxTimer().start(fadeTime + MIN_TIME, function(_) introComplete());
-		});
+		}).onError(loadError);
+	}
+
+	function loadError(error:Dynamic):Void
+	{
+		if (!loadingActive || loadFailed || leaving) return;
+		loadFailed = true;
+		trace('Unable to load bundled song: $error');
+		var message = new FlxText(40, FlxG.height / 2 - 60, FlxG.width - 80,
+			"Unable to load this song.\nTap to return to the main menu.", 28);
+		message.setFormat(Paths.font("vcr.ttf"), 28, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
+		add(message);
 	}
 
 	function checkLoadSong(path:String)
@@ -95,7 +112,7 @@ class LoadingState extends MusicBeatState
 			Assets.loadSound(path).onComplete(function(_)
 			{
 				callback();
-			});
+			}).onError(loadError);
 		}
 	}
 
@@ -106,19 +123,35 @@ class LoadingState extends MusicBeatState
 		{
 			@:privateAccess
 			if (!LimeAssets.libraryPaths.exists(library))
-				throw "Missing library: " + library;
+			{
+				loadError("Missing library: " + library);
+				return;
+			}
 
 			var callback = callbacks.add("library:" + library);
 			Assets.loadLibrary(library).onComplete(function(_)
 			{
 				callback();
-			});
+			}).onError(loadError);
 		}
 	}
 
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
+		if (loadFailed)
+		{
+			var returnToMenu = controls.ACCEPT || controls.BACK;
+			#if ios
+			for (touch in FlxG.touches.list) if (touch.justPressed) returnToMenu = true;
+			#end
+			if (returnToMenu && !leaving)
+			{
+				leaving = true;
+				MusicBeatState.switchState(new states.menus.MainMenuState());
+			}
+			return;
+		}
 		funkay.setGraphicSize(Std.int(0.88 * FlxG.width + 0.9 * (funkay.width - 0.88 * FlxG.width)));
 		funkay.updateHitbox();
 		if (controls.ACCEPT)
@@ -136,6 +169,8 @@ class LoadingState extends MusicBeatState
 
 	function onLoad()
 	{
+		if (!loadingActive || loadFailed || leaving) return;
+		leaving = true;
 		if (stopMusic && FlxG.sound.music != null)
 			FlxG.sound.music.stop();
 
@@ -201,6 +236,7 @@ class LoadingState extends MusicBeatState
 
 	override function destroy()
 	{
+		loadingActive = false;
 		super.destroy();
 
 		callbacks = null;

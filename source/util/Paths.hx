@@ -135,13 +135,31 @@ class Paths
 	inline static function getLibraryPathForce(file:String, library:String)
 	{
 		var returnPath = '$library:assets/$library/$file';
-		return returnPath;
+		return #if ios resolveAssetCase(returnPath) #else returnPath #end;
 	}
 
 	inline public static function getPreloadPath(file:String = '')
 	{
-		return 'assets/$file';
+		return #if ios resolveAssetCase('assets/$file') #else 'assets/$file' #end;
 	}
+
+	#if ios
+	static var assetCaseIndex:AssetCaseIndex;
+	static var indexedShared:Bool = false;
+
+	/** Original Windows assets occasionally differ in filename case (Sad_Demon.json). */
+	static function resolveAssetCase(path:String):String
+	{
+		if (OpenFlAssets.exists(path)) return path;
+		var sharedReady = OpenFlAssets.getLibrary("shared") != null;
+		if (assetCaseIndex == null || sharedReady != indexedShared)
+		{
+			assetCaseIndex = new AssetCaseIndex(OpenFlAssets.list());
+			indexedShared = sharedReady;
+		}
+		return assetCaseIndex.resolve(path);
+	}
+	#end
 
 	inline static public function file(file:String, type:AssetType = TEXT, ?library:String)
 	{
@@ -263,7 +281,7 @@ class Paths
 
 	inline static public function fileExists(key:String, type:AssetType, ?ignoreMods:Bool = false, ?library:String)
 	{
-		if (OpenFlAssets.exists(getPath(key, type)))
+		if (OpenFlAssets.exists(getPath(key, type, library), type))
 		{
 			return true;
 		}
@@ -272,22 +290,22 @@ class Paths
 
 	inline static public function getSparrowAtlas(key:String, ?library:String):FlxAtlasFrames
 	{
-		return FlxAtlasFrames.fromSparrow(image(key, library), file('images/$key.xml', library));
+		return FlxAtlasFrames.fromSparrow(image(key, library), file('images/$key.xml', TEXT, library));
 	}
 
 	inline static public function getXMLAtlas(key:String, ?library:String):FlxAtlasFrames
 	{
-		return FlxAtlasFrames.fromTexturePackerXml(image(key, library), file('images/$key.xml', library));
+		return FlxAtlasFrames.fromTexturePackerXml(image(key, library), file('images/$key.xml', TEXT, library));
 	}
 
 	inline static public function getPackerAtlas(key:String, ?library:String)
 	{
-		return FlxAtlasFrames.fromSpriteSheetPacker(image(key, library), file('images/$key.txt', library));
+		return FlxAtlasFrames.fromSpriteSheetPacker(image(key, library), file('images/$key.txt', TEXT, library));
 	}
 
 	inline static public function getJSONAtlas(key:String, ?library:String)
 	{
-		return FlxAtlasFrames.fromTexturePackerJson(image(key, library), file('images/$key.json', library));
+		return FlxAtlasFrames.fromTexturePackerJson(image(key, library), file('images/$key.json', TEXT, library));
 	}
 
 	inline static public function formatToSongPath(path:String)

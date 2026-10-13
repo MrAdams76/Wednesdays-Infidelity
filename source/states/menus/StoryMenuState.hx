@@ -283,7 +283,8 @@ class StoryMenuState extends MusicBeatState
 				songArray.push(leWeek[i][0]);
 			}
 
-			if (Progression.weekProgress.exists(WeekData.weeksList[curWeek]))
+			var selectedWeekId = loadedWeeks[curWeek].fileName;
+			if (Progression.weekProgress.exists(selectedWeekId))
 			{
 				openSubState(new states.substates.StoryProgress(function()
 				{
@@ -291,7 +292,7 @@ class StoryMenuState extends MusicBeatState
 					playGame(songArray);
 				}, function()
 				{
-					var resumeInfo = Progression.weekProgress.get(WeekData.weeksList[curWeek]);
+					var resumeInfo = Progression.weekProgress.get(selectedWeekId);
 
 					if (!songArray.contains(resumeInfo.song))
 						songArray[songArray.length] = resumeInfo.song;
@@ -425,7 +426,8 @@ class StoryMenuState extends MusicBeatState
 		else
 			weekTitle.visible = false;
 
-		PlayState.storyWeek = curWeek;
+		// Hidden weeks are filtered from this menu, but gameplay uses weeksList.
+		PlayState.storyWeek = WeekData.weeksList.indexOf(leWeek.fileName);
 
 		CoolUtil.difficulties = CoolUtil.defaultDifficulties.copy();
 		var diffStr:String = WeekData.getCurrentWeek().difficulties;

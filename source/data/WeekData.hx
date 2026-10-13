@@ -7,7 +7,6 @@ import openfl.utils.Assets as OpenFlAssets;
 import states.game.PlayState;
 import sys.FileSystem;
 import sys.io.File;
-import sys.io.File;
 import util.CoolUtil;
 
 using StringTools;
@@ -111,7 +110,7 @@ class WeekData
 			{
 				if (OpenFlAssets.exists(assetPath))
 				{
-					sexList = [for (name in OpenFlAssets.getText(assetPath).split('\\n')) name.trim()];
+					sexList = [for (name in OpenFlAssets.getText(assetPath).split('\n')) name.trim()];
 					sexList = sexList.filter(function(name) return name.length > 0);
 					break;
 				}

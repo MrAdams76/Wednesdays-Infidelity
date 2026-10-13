@@ -177,15 +177,15 @@ class ControlsSubState extends MusicBeatSubstate
 			}
 
 			bindingTime += elapsed;
-			if (bindingTime > 5)
+			if (bindingTime > 5 #if ios || input.MobileInput.check("back") #end)
 			{
 				if (curAlt)
 				{
-					grpInputsAlt[curSelected].alpha = 1;
+					grpInputsAlt[getInputTextNum()].alpha = 1;
 				}
 				else
 				{
-					grpInputs[curSelected].alpha = 1;
+					grpInputs[getInputTextNum()].alpha = 1;
 				}
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				rebindingKey = false;

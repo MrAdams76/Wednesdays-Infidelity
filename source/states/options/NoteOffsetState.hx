@@ -172,6 +172,9 @@ class NoteOffsetState extends MusicBeatState
 
 	var startMousePos:FlxPoint = new FlxPoint();
 	var startComboOffset:FlxPoint = new FlxPoint();
+	#if ios
+	var offsetTouchId:Null<Int>;
+	#end
 
 	override public function update(elapsed:Float)
 	{
@@ -182,10 +185,10 @@ class NoteOffsetState extends MusicBeatState
 		if (onComboMenu)
 		{
 			var controlArray:Array<Bool> = [
-				FlxG.keys.justPressed.LEFT,
-				FlxG.keys.justPressed.RIGHT,
-				FlxG.keys.justPressed.UP,
-				FlxG.keys.justPressed.DOWN,
+				FlxG.keys.justPressed.LEFT #if ios || input.MobileInput.check("ui_left-press") #end,
+				FlxG.keys.justPressed.RIGHT #if ios || input.MobileInput.check("ui_right-press") #end,
+				FlxG.keys.justPressed.UP #if ios || input.MobileInput.check("ui_up-press") #end,
+				FlxG.keys.justPressed.DOWN #if ios || input.MobileInput.check("ui_down-press") #end,
 
 				FlxG.keys.justPressed.A,
 				FlxG.keys.justPressed.D,
@@ -223,6 +226,35 @@ class NoteOffsetState extends MusicBeatState
 				repositionCombo();
 			}
 
+			#if ios
+			var dragging = false;
+			for (touch in FlxG.touches.list)
+			{
+				if (offsetTouchId == null && touch.justPressed && subState == null)
+				{
+					touch.getScreenPosition(camHUD, startMousePos);
+					// Reserve the bottom bar for menu controls.
+					if (startMousePos.y >= FlxG.height - 100) continue;
+					if (touch.overlaps(comboNums, camHUD)) holdingObjectType = true;
+					else if (touch.overlaps(rating, camHUD)) holdingObjectType = false;
+					else continue;
+					offsetTouchId = touch.touchPointID;
+					var offsetIndex = holdingObjectType ? 2 : 0;
+					startComboOffset.set(ClientPrefs.comboOffset[offsetIndex], ClientPrefs.comboOffset[offsetIndex + 1]);
+				}
+				if (offsetTouchId == touch.touchPointID && touch.pressed)
+				{
+					dragging = true;
+					var point = touch.getScreenPosition(camHUD);
+					var offsetIndex = holdingObjectType ? 2 : 0;
+					ClientPrefs.comboOffset[offsetIndex] = Math.round(point.x - startMousePos.x + startComboOffset.x);
+					ClientPrefs.comboOffset[offsetIndex + 1] = Math.round(startComboOffset.y - (point.y - startMousePos.y));
+					point.put();
+					repositionCombo();
+				}
+			}
+			if (!dragging) { offsetTouchId = null; holdingObjectType = null; }
+			#else
 			// probably there's a better way to do this but, oh well.
 			if (FlxG.mouse.justPressed)
 			{
@@ -267,6 +299,7 @@ class NoteOffsetState extends MusicBeatState
 				}
 			}
 
+			#end
 			if (controls.RESET)
 			{
 				for (i in 0...ClientPrefs.comboOffset.length)

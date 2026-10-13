@@ -83,7 +83,7 @@ class PauseSubState extends MusicBeatSubstate
 		{
 			pauseMusic.loadEmbedded(Paths.music(songName), true, true);
 		}
-		else if (songName != 'None')
+		else if (ClientPrefs.pauseMusic != 'None')
 		{
 			pauseMusic.loadEmbedded(Paths.music(Paths.formatToSongPath(ClientPrefs.pauseMusic)), true, true);
 		}
