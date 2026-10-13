@@ -21,6 +21,7 @@ class MobileInput extends FlxBasic
     var hitboxes:Array<FlxSprite> = [];
     var names:Array<String> = [];
     var blocked:Map<Int, Bool> = [];
+    var lastOwner:FlxState;
 
     public function new()
     {
@@ -33,13 +34,13 @@ class MobileInput extends FlxBasic
     function clear():Void
     {
         actions.clear();
-        for (touch in FlxG.touches.list) blocked.set(touch.touchPointID, true);
+        for (touch in FlxG.touches.list) if (touch.pressed) blocked.set(touch.touchPointID, true);
     }
 
     override public function update(elapsed:Float):Void
     {
         var current:FlxState = FlxG.state;
-        while (current.subState != null) current = current.subState;
+        while (current != null && current.subState != null) current = current.subState;
         if (current != owner || (padCamera != null && FlxG.cameras.list.indexOf(padCamera) < 0))
         {
             rebuild(current);
@@ -47,6 +48,10 @@ class MobileInput extends FlxBasic
             clear();
         }
         var active:Array<String> = [];
+        // Retire blocked fingers once released; do not retain IDs across taps.
+        var downIds:Map<Int, Bool> = [];
+        for (touch in FlxG.touches.list) if (touch.pressed) downIds.set(touch.touchPointID, true);
+        for (id in blocked.keys()) if (!downIds.exists(id)) blocked.remove(id);
         for (touch in FlxG.touches.list)
         {
             if (!touch.pressed)
@@ -56,7 +61,7 @@ class MobileInput extends FlxBasic
             }
             if (blocked.exists(touch.touchPointID)) continue;
             for (i in 0...hitboxes.length)
-                if (touch.overlaps(hitboxes[i], padCamera)) active.push(names[i]);
+                if (padCamera != null && touch.overlaps(hitboxes[i], padCamera)) active.push(names[i]);
         }
         actions.advance(active);
         for (i in 0...hitboxes.length)
@@ -116,6 +121,7 @@ class MobileInput extends FlxBasic
 
     function button(x:Float, y:Float, w:Float, h:Float, action:String, label:String):Void
     {
+        // The hitbox matches the displayed button and uses the same HUD camera.
         var box = new FlxSprite(x, y).makeGraphic(Std.int(w), Std.int(h), FlxColor.WHITE);
         box.scrollFactor.set();
         box.cameras = [padCamera];
