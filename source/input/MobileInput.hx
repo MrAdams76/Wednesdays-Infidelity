@@ -14,13 +14,13 @@ import states.game.PlayState;
 /** Runs as a plugin after Flixel updates touches, before states read controls. */
 class MobileInput extends FlxBasic
 {
-    public static var actions = new TouchActions();
+    static var router = new TouchRouter();
+    public static var actions = router.actions;
     var owner:FlxState;
     var padCamera:FlxCamera;
     var pad:FlxGroup;
     var hitboxes:Array<FlxSprite> = [];
     var names:Array<String> = [];
-    var blocked:Map<Int, Bool> = [];
     var laneIcons:Array<FlxSprite> = [];
 
     public function new()
@@ -33,8 +33,7 @@ class MobileInput extends FlxBasic
 
     function clear():Void
     {
-        actions.clear();
-        for (touch in FlxG.touches.list) if (touch.pressed) blocked.set(touch.touchPointID, true);
+        router.reset([for (touch in FlxG.touches.list) if (touch.pressed) touch.touchPointID]);
     }
 
     override public function update(elapsed:Float):Void
@@ -47,23 +46,15 @@ class MobileInput extends FlxBasic
             // A press that opened a menu must not select its first entry too.
             clear();
         }
-        var active:Array<String> = [];
-        // Retire blocked fingers once released; do not retain IDs across taps.
-        var downIds:Map<Int, Bool> = [];
-        for (touch in FlxG.touches.list) if (touch.pressed) downIds.set(touch.touchPointID, true);
-        for (id in blocked.keys()) if (!downIds.exists(id)) blocked.remove(id);
+        var contacts:Array<input.TouchRouter.TouchContact> = [];
         for (touch in FlxG.touches.list)
         {
-            if (!touch.pressed)
-            {
-                blocked.remove(touch.touchPointID);
-                continue;
-            }
-            if (blocked.exists(touch.touchPointID)) continue;
-            for (i in 0...hitboxes.length)
-                if (padCamera != null && touch.overlaps(hitboxes[i], padCamera)) active.push(names[i]);
+            if (!touch.pressed || padCamera == null) continue;
+            var point = touch.getScreenPosition(padCamera);
+            contacts.push({id:touch.touchPointID, x:point.x, y:point.y});
+            point.put();
         }
-        actions.advance(active);
+        router.advance(contacts);
         for (i in 0...hitboxes.length)
             hitboxes[i].alpha = StringTools.startsWith(names[i], "note_")
                 ? (actions.held.exists(names[i]) ? 0.22 : 0.06)
@@ -81,6 +72,7 @@ class MobileInput extends FlxBasic
         if (padCamera != null && FlxG.cameras.list.indexOf(padCamera) < 0) padCamera = null;
         hitboxes = [];
         names = [];
+        router.zones = [];
         laneIcons = [];
         owner = current;
         if (current == null) return;
@@ -99,12 +91,12 @@ class MobileInput extends FlxBasic
         if (Std.isOfType(current, PlayState))
         {
             var labels = ["LEFT", "DOWN", "UP", "RIGHT"];
-            var laneNames = ["note_left", "note_down", "note_up", "note_right"];
+            var zones = TouchRouter.gameplay(data.ClientPrefs.mobileTouchLayout, FlxG.width, FlxG.height);
             var colors:Array<Int> = [0xFFC24B99, 0xFF00FFFF, 0xFF12FA05, 0xFFF9393F];
             for (i in 0...4)
             {
-                // Continuous, non-overlapping lanes reach both bottom edges.
-                button(i * FlxG.width / 4, FlxG.height * 0.36, FlxG.width / 4, FlxG.height * 0.64, laneNames[i], labels[i]);
+                var zone = zones[i];
+                button(zone.x, zone.y, zone.width, zone.height, zone.action, labels[i]);
                 hitboxes[i].color = colors[i];
                 var arrow = new FlxSprite();
                 arrow.frames = Paths.getSparrowAtlas("NOTE_assets", "shared");
@@ -112,7 +104,7 @@ class MobileInput extends FlxBasic
                 arrow.animation.play("idle");
                 arrow.setGraphicSize(64);
                 arrow.updateHitbox();
-                arrow.setPosition((i + 0.5) * FlxG.width / 4 - arrow.width / 2, FlxG.height - 122);
+                arrow.setPosition(zone.x + (zone.width - arrow.width) / 2, zone.y + zone.height - 122);
                 arrow.scrollFactor.set();
                 arrow.cameras = [padCamera];
                 pad.add(arrow);
@@ -153,6 +145,7 @@ class MobileInput extends FlxBasic
         pad.add(box);
         hitboxes.push(box);
         names.push(action);
+        router.zones.push({x:x, y:y, width:w, height:h, action:action});
         var text = new FlxText(x, y + h - 38, w, label, 22);
         text.setFormat(null, 22, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
         text.scrollFactor.set();

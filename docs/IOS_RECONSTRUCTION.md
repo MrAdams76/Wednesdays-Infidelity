@@ -47,3 +47,28 @@ Built on `33b19cf`, preserving the later native-framework, warning-screen and me
 Validation: all 809 original asset blobs remain identical to the PC reference; all seven week definitions, twenty playable Hard charts, their character artwork/atlases and stages, and ten videos pass the content check. Haxe touch tests and iOS C++ generation pass; generated hxcpp build instructions contain the native video source without framework linker flags. All Codemagic shell scripts pass `bash -n`. The existing flixel-ui enum warning remains.
 
 The archived, unlisted Phantasm chart references `Happy_Mouse` artwork absent from the original repository. It is not part of the twenty menu-listed songs and has not been enabled or replaced with invented artwork. Full Xcode linking, installation, performance, and complete-song playthroughs still require Codemagic and an iPhone.
+
+## Android touch reference
+
+Reference: the user's `FNF Wednesdays Infidelity Part 2 Optimizado (M.M,A.S).apk`,
+SHA-256 `272bea040c04b1c9a6aef90cb5f59fe67a4e63f6a5277f942bb8ba710a94d0a7`.
+Its hitbox atlas describes four 320 x 720 lanes across a 1280 x 720 screen.
+The compiled library contains `android.FlxHitbox`, `android.FlxVirtualPad`,
+`android.flixel.FlxTypedButton.checkTouchOverlap`, and hitbox/left/right/custom
+control-mode identifiers. Full Haxe engine source is not included in the APK;
+this is an iOS adaptation of the inspected layout and control structure, not a
+claim that the Android native library can run on iOS.
+
+The iOS Gameplay settings now save a Touch Layout choice: Hitbox (default), Left
+pad, or Right pad. The separate touch router aggregates fingers into the original
+Controls actions, transfers held touches between buttons, and clears carried
+fingers on state/focus changes. Full-height lanes use exclusive shared boundaries;
+Pause and Dodge take priority over overlapping note lanes. The custom-position
+editor found in the Android binary is not implemented in this pass.
+
+No Android reduced-resolution textures, re-encoded audio, altered charts, or
+cut-down artwork were imported. All original PC assets remain unchanged. Visible
+arrows use the PC NOTE_assets atlas. Regression tests cover chords at screen
+edges, shared lane boundaries, utility-button priority, state transitions, reused
+finger IDs, duplicate-finger sustains, sliding and both virtual-pad layouts.
+iOS C++ generation passes; on-device responsiveness is still to be tested.

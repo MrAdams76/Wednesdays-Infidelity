@@ -71,6 +71,7 @@ workflows:
           cd "$CM_BUILD_DIR"
           python3 tools/verify_ios_content.py
           haxe -D touch_actions_test -cp source -cp tools -main TouchActionsTest --interp
+          haxe -D touch_actions_test -cp source -cp tools -main TouchRouterTest --interp
           haxe -D touch_actions_test -cp source -cp tools -main AssetPathsTest --interp
           xcrun --sdk iphoneos clang++ -fsyntax-only -x objective-c++ -std=c++11 -arch arm64 \
             -isysroot "$(xcrun --sdk iphoneos --show-sdk-path)" \

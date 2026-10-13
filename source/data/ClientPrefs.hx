@@ -45,6 +45,7 @@ class ClientPrefs
 	public static var doNotShowWarnings:Bool = false;
 	public static var hudStyle:String = "Box Funkin";
 	public static var nubMode:Bool = false;
+	public static var mobileTouchLayout:String = 'Hitbox';
 
 	// Every key has two binds, add your key bind down here and then add your control on options/ControlsSubState.hx and Controls.hx
 	public static var keyBinds:Map<String, Array<FlxKey>> = [
@@ -115,6 +116,7 @@ class ClientPrefs
 		FlxG.save.data.doNotShowWarnings = doNotShowWarnings;
 		FlxG.save.data.hudStyle = hudStyle;
 		FlxG.save.data.nubMode = nubMode;
+		FlxG.save.data.mobileTouchLayout = mobileTouchLayout;
 
 		FlxG.save.flush();
 
@@ -127,6 +129,8 @@ class ClientPrefs
 
 	public static function loadPrefs()
 	{
+		if (['Hitbox', 'Left pad', 'Right pad'].contains(FlxG.save.data.mobileTouchLayout))
+			mobileTouchLayout = FlxG.save.data.mobileTouchLayout;
 		if (FlxG.save.data.downScroll != null)
 		{
 			downScroll = FlxG.save.data.downScroll;
