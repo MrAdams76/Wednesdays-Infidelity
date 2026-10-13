@@ -300,6 +300,34 @@ class MainMenuState extends MusicBeatState
 		var lerpVal:Float = CoolUtil.boundTo(elapsed * 5.6, 0, 1);
 		camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x, camFollow.x, lerpVal), FlxMath.lerp(camFollowPos.y, camFollow.y, lerpVal));
 
+		#if ios
+		// Direct touch selection is independent of the virtual-pad plugin's
+		// frame timing. Hit the actual animated menu sprite on first tap.
+		if (!selectedSomethin)
+		{
+			for (touch in FlxG.touches.list)
+			{
+				if (!touch.justPressed) continue;
+				for (item in menuItems.members)
+				{
+					if (item == null || !item.visible || !touch.overlaps(item, camGame)) continue;
+					if (curSelected != item.ID)
+					{
+						curSelected = item.ID;
+						changeItem();
+						FlxG.sound.play(Paths.sound('scrollMenu'));
+					}
+					else
+					{
+						// Reuse the original selection animation/transition path.
+						input.MobileInput.actions.pressed.set('accept', true);
+					}
+					break;
+				}
+			}
+		}
+		#end
+
 		if (!selectedSomethin)
 		{
 			#if ios
